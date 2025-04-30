@@ -8,7 +8,7 @@ Así, si en el futuro trabajas en otro proyecto, las librerías de uno no interf
 
 1. Abre la terminal y entra a la carpeta backend de tu proyecto:
  ´´git bash
-cd Clear-Pass-proyecto/backend
+cd Clear-Pass-proyecto/ la ruta puede variar
 
 2. Crea un entorno virtual con phyton
 ´´git bash
@@ -17,12 +17,13 @@ python -m venv venv
 
 3. Activa el entorno vitual
 ´´git bash
-venv\Scripts\activate
+source venv\Scripts\activate
 *Cuando el entorno virtual está activo, verás (venv) al inicio de la línea de comandos.*
 
 ## Paso 2: Instalar Flask y MySQL en el entorno virtual
 
-¿Qué estamos haciendo? Flask es el framework (herramienta) que usaremos para construir el backend de nuestra aplicación web. Flask no viene preinstalado con Python, así que debemos instalarlo. También instalaremos flask-mysqldb, que nos permitirá conectarnos con la base de datos MySQL.## Paso 2: Instalar Flask y MySQL en el entorno vitual
+¿Qué estamos haciendo? Flask es el framework (herramienta) que usaremos para construir el backend de nuestra aplicación web. Flask no viene preinstalado con Python, así que debemos instalarlo. También instalaremos flask-mysqldb, que nos permitirá conectarnos con la base de datos MySQL.
+## Paso 2: Instalar Flask y MySQL en el entorno vitual
 
 1. Asegúrate de que el entorno virtual está activado.
 2. Instala Flask y las librerías necesarias con este comando:

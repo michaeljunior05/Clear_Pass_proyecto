@@ -1,0 +1,8 @@
+### backend/controllers/ → Contiene la lógica de negocio. Aquí están las funciones que procesan datos y responden a las solicitudes. 
+### Ejemplo: user_controller.py maneja el registro e inicio de sesión.
+
+
+### backend/models/ → Aquí definimos las clases con Programación Orientada a Objetos (POO). Ejemplo: user.py define la clase Usuario con propiedades como email y password.
+
+### backend/routes/ → Contiene las rutas de Flask. Ejemplo: login.py define la ruta /login donde los usuarios envían sus credenciales.
+
