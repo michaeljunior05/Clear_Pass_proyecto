@@ -8,7 +8,7 @@ Así, si en el futuro trabajas en otro proyecto, las librerías de uno no interf
 
 1. Abre la terminal y entra a la carpeta backend de tu proyecto:
  ´´git bash
-cd Clear-Pass-proyecto/backend
+cd Clear-Pass-proyecto/ la ruta puede variar
 
 2. Crea un entorno virtual con phyton
 ´´git bash
