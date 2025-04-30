@@ -1,0 +1,6 @@
+### database/users/ → Archivos que definen la tabla de usuarios y sus relaciones en MySQL.
+
+### database/companies/ → Maneja los datos de empresas importadoras.
+
+### database/products/ → Almacena los productos de cada empresa.
+
