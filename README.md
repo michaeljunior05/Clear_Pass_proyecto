@@ -1,5 +1,5 @@
 # Clear_Pass_proyecto
-Proyecto de la materia Desarrollo de Software
+_Proyecto de la materia Desarrollo de Software_
 
 ## Lenguajes que utilizaremos
 *backend --> Phyton (Flask/Django)*
