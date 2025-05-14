@@ -1,23 +1,157 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clear Pass</title>
-    <link rel="stylesheet" href="static/styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clear Pass</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Arial', sans-serif;
+    }
+
+    body, html {
+      height: 100%;
+      width: 100%;
+    }
+
+    .container {
+      display: flex;
+      height: 100vh;
+      flex-direction: row;
+    }
+
+    .left, .right {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 40px;
+    }
+
+    .left {
+      background-color: #635BFF;
+    }
+
+    .logo-circle {
+      background: white;
+      width: 250px;
+      height: 250px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: black;
+    }
+
+    .logo-check {
+      color: #635BFF;
+      font-size: 36px;
+      margin: 0 10px;
+    }
+
+    .right {
+      background: white;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .login-title {
+      font-size: 32px;
+      color: #635BFF;
+      font-weight: bold;
+    }
+
+    .login-subtitle {
+      margin-top: 5px;
+      color: #333;
+      font-size: 16px;
+    }
+
+    .form-group {
+      margin-top: 30px;
+      width: 100%;
+    }
+
+    input {
+      width: 100%;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      border: none;
+      background: #ddd;
+      font-size: 16px;
+    }
+
+    button {
+      background-color: #635BFF;
+      color: white;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      width: 100%;
+    }
+
+    button:hover {
+      background-color: #4e4ccf;
+    }
+
+    /* Diseño responsivo */
+    @media (max-width: 768px) {
+      .container {
+        flex-direction: column;
+      }
+
+      .left {
+        height: 40%;
+      }
+
+      .right {
+        height: 60%;
+        align-items: center;
+      }
+
+      .logo-circle {
+        width: 150px;
+        height: 150px;
+        font-size: 18px;
+      }
+
+      .logo-check {
+        font-size: 24px;
+      }
+
+      .form-group {
+        width: 100%;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>Clear Pass - Importadores Chinos</h1>
-        <nav>
-            <a href="login.html">Iniciar sesión</a>
-            <a href="productos.html">Ver Productos</a>
-        </nav>
-    </header>
-
-    <section>
-        <h2>Bienvenido a Clear Pass</h2>
-        <p>Encuentra los mejores productos de importadores chinos fácilmente.</p>
-    </section>
+  <div class="container">
+    <div class="left">
+      <div class="logo-circle">
+        <span>Clear</span>
+        <span class="logo-check">✔</span>
+        <span>Pass</span>
+      </div>
+    </div>
+    <div class="right">
+      <div>
+        <div class="login-title">Iniciar sesión</div>
+        <div class="login-subtitle">Introduce tu mail y contraseña</div>
+        <div class="form-group">
+          <input type="email" placeholder="Email">
+          <input type="password" placeholder="Contraseña">
+          <button>Ingresar</button>
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
