@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Pass</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="left-section">
+            <div class="logo-circle">
+                <span class="logo-text">Clear</span>
+                <span class="logo-check">✔</span>
+                <span class="logo-text">Pass</span>
+            </div>
+        </div>
+        <div class="right-section">
+            <div class="login-box">
+                <h1 class="login-title">Iniciar sesión</h1>
+                <p class="login-subtitle">Introduce tu mail y contraseña</p>
+                <form action="/login" method="POST">
+                    <div class="form-group">
+                        <input type="email" class="input-field" placeholder="Email" name="email">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" class="input-field" placeholder="Contraseña" name="password">
+                    </div>
+                    <button type="submit" class="login-button">Ingresar</button>
+                </form>
+            </div>
+            <div class="google-signin-button" id="g_id_onload"
+                 data-client_id="222270840199-pcntooj9dsvmsn79j11glth1fueaurij.apps.googleusercontent.com"
+                 data-login_uri="http://127.0.0.1:5000"  data-auto_prompt="false">
+                <div class="g_id_signin" data-type="standard"></div>
+            </div>
+        </div>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
+
+
+
+script.js:
+document.addEventListener('DOMContentLoaded', () => {
+    const loginForm = document.querySelector('form');
+
+    if (loginForm) {
+        loginForm.addEventListener('submit', async (event) => {
+            event.preventDefault(); // Evita el envío tradicional del formulario
+
+            const emailInput = loginForm.querySelector('input[name="email"]');
+            const passwordInput = loginForm.querySelector('input[name="password"]');
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
+            try {
+                const response = await fetch('/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded', // Indica que enviamos datos de formulario
+                    },
+                    body: new URLSearchParams({
+                        'email': email,
+                        'password': password,
+                    }),
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Inicio de sesión exitoso, redirigir a la página principal
+                    window.location.href = '/productos'; // Asumiendo que tienes una ruta /productos en tu frontend
+                    console.log('Inicio de sesión exitoso:', data);
+                    // Podrías guardar el token de sesión o la información del usuario aquí si fuera necesario
+                } else {
+                    // Error en el inicio de sesión, mostrar mensaje de error
+                    console.error('Error en el inicio de sesión:', data);
+                    alert(data.message || 'Error al iniciar sesión'); // Muestra un mensaje de error al usuario
+                }
+
+            } catch (error) {
+                console.error('Error de red:', error);
+                alert('Error de red al intentar iniciar sesión');
+            }
+        });
+    }
+});
