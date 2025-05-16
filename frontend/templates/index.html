@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Pass</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="left-section">
+            <div class="logo-circle">
+                <span class="logo-text">Clear</span>
+                <span class="logo-check">✔</span>
+                <span class="logo-text">Pass</span>
+            </div>
+        </div>
+        <div class="right-section">
+            <div class="login-box">
+                <h1 class="login-title">Iniciar sesión</h1>
+                <p class="login-subtitle">Introduce tu mail y contraseña</p>
+                <form action="/login" method="POST">
+                    <div class="form-group">
+                        <input type="email" class="input-field" placeholder="Email" name="email">
+                    </div>
+                    <div class="form-group">
+                        <input type="password" class="input-field" placeholder="Contraseña" name="password">
+                    </div>
+                    <button type="submit" class="login-button">Ingresar</button>
+                </form>
+                <div class="separator">o</div>
+                <button class="google-btn" id="googleSignIn">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
+                    Regístrate con tu cuenta de Google
+                </button>
+                <p class="login-subtitle">¿No tienes una cuenta? <a href="{{ url_for('show_register_form') }}">Regístrate</a></p>
+                </div>
+        </div>
+    </div>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
