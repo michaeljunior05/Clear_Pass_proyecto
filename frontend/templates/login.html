@@ -1,0 +1,23 @@
+# estructura:
+Clear_Pass_proyecto/
+│── backend/  
+│   ├── controllers/       # Lógica de manejo de usuarios y llamadas a APIs  
+│   │   ├── auth_controller.py  # Manejo del login y registro  
+│   │   ├── api_client.py       # Conexión con APIs externas  
+│   ├── models/            # Estructura de datos en Python  
+│   │   ├── user.py             # Modelo de usuario  
+│   ├── routes/            # Rutas del backend  
+│   │   ├── auth_routes.py      # Endpoints de login y registro  
+│   │   ├── product_routes.py   # Endpoint para obtener productos desde la API  
+│   ├── json_storage.py    # Archivo para gestionar datos en JSON  
+│   ├── app.py             # Archivo principal que inicia Flask  
+│── frontend/  
+│   ├── static/            # Archivos CSS, JS e imágenes  
+│   ├── templates/         # HTML para la página web  
+|   │   ├── login.html          # Formulario de login
+|   |   ├── index.html          # Página principal
+│   │   ├── productos.html       # Página para ver productos  
+│── database/  
+│   ├── data.json          # Archivo JSON donde se almacenan temporalmente los datos  
+│── config.py              # Configuración de Flask  
+│── requirements.txt       # Lista de dependencias del proyecto
