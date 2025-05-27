@@ -1,0 +1,114 @@
+
+
+/* 📌 Configuración del cuerpo de la página */
+/* Se define la fuente general y se establece la imagen de fondo con ajustes adecuados */
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    text-align: center;
+    background-image: url("../static/images/conteiner.jpg"); /* Imagen de fondo: background-image: url("images/conteiner.jpg");*/
+    background-size: cover; /* Ajusta la imagen para que cubra toda la pantalla */
+    background-position: center; /* Centra la imagen */
+    background-attachment: fixed; /* Mantiene la imagen fija mientras se hace scroll */
+}
+
+/* 📌 Estilos de la barra de navegación */
+header {
+    display: flex; /* Usa flexbox para organizar elementos */
+    justify-content: space-between; /* Distribuye elementos a los extremos */
+    padding: 20px;
+    background-color: rgba(255, 255, 255, 0.3); /* Fondo semi-transparente */
+    backdrop-filter: blur(8px); /* Agrega un efecto de desenfoque */
+    color: black; /* Color del texto */
+}
+
+/* 📌 Ajuste de la lista de navegación */
+nav ul {
+    list-style: none; /* Elimina los estilos predeterminados de lista */
+    display: flex; /* Usa flexbox para organizar enlaces */
+    align-items: center; /* Centra verticalmente los elementos */
+    gap: 20px; /* Espacio entre elementos */
+    padding: 0;
+}
+
+nav ul li {
+    display: inline-block; /* Asegura que los elementos estén alineados en línea */
+}
+
+/* 📌 Estilos de los enlaces de navegación */
+nav ul li a {
+    text-decoration: none; /* Elimina subrayado */
+    color: black;
+    padding: 10px;
+    border-radius: 5px; /* Bordes redondeados */
+    transition: 0.3s ease-in-out; /* Transición suave */
+}
+
+/* 📌 Efecto hover en los enlaces */
+nav ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.6); /* Fondo con más visibilidad */
+}
+
+/* 📌 Estilos de la caja de búsqueda */
+.search-box {
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid gray;
+    width: 200px; /* Ancho fijo */
+    transition: 0.3s ease-in-out;
+}
+
+/* 📌 Ajuste del borde cuando está enfocado */
+.search-box:focus {
+    border-color: #635BFF; /* Cambio de color cuando el usuario interactúa */
+}
+
+/* 📌 Sección Hero (mensaje principal) */
+.hero {
+    margin-top: 190px; /* Baja el bloque para mejor visualización */
+    padding-left: 40px; /* Mueve ligeramente el contenido hacia la izquierda */
+}
+
+/* 📌 Estilos del título principal */
+.hero h1 {
+    font-size: 2.8rem; /* Tamaño grande */
+    color: #151047; /* Color principal */
+    font-weight: bold; /* Texto en negrita */
+    text-align: left; /* Alineación a la izquierda */
+    margin-left: 30px; /* Ajuste de posición */
+}
+
+/* 📌 Estilos del texto descriptivo */
+.hero p {
+    font-size: 1.5rem;
+    color: #1c1461;
+    text-align: left;
+    margin-left: 30px; /* Alineado con el título */
+    margin-top: 15px; /* Espaciado entre título y texto */
+}
+
+/* 📌 Estilos de la sección "¿Quiénes somos?" */
+.about-section {
+    margin-top: 100px; /* Espacio superior */
+    padding: 50px;
+    background-color: rgba(255, 255, 255, 0.8); /* Fondo con transparencia */
+    border-radius: 10px; /* Bordes redondeados */
+    text-align: center;
+}
+
+/* 📌 Ajuste del título dentro de "¿Quiénes somos?" */
+.about-section h2 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #1c1461;
+}
+
+/* 📌 Ajuste del texto dentro de "¿Quiénes somos?" */
+.about-section p {
+    font-size: 1.3rem;
+    color: #333;
+    max-width: 800px; /* Limita el ancho para mejorar la legibilidad */
+    margin: 20px auto; /* Centra el texto */
+    line-height: 1.6; /* Espaciado entre líneas */
+}
