@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registrarse</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
 </head>
 <body>
     <div class="container">
@@ -36,7 +36,7 @@
                     <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
                     Regístrate con tu cuenta de Google
                 </button>
-                <p class="login-subtitle">¿Ya tienes una cuenta? <a href="{{ url_for('index') }}">Iniciar sesión</a></p>
+                <p class="login-subtitle">¿Ya tienes una cuenta? <a href="{{ url_for('show_login_form') }}">Iniciar sesión</a></p>
             </div>
         </div>
     </div>

@@ -6,3 +6,5 @@
 
 ### backend/routes/ → Contiene las rutas de Flask. Ejemplo: login.py define la ruta /login donde los usuarios envían sus credenciales.
 
+pip install Flask-Cors
+pip install cryptography

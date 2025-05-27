@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Clear ✓ Pass</title> <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}"> {# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #}
+    
+</head>
+<body>
+
+    <header>
+        <div class="logo">Clear ✓ Pass</div> <nav>
+            <ul>
+                <li><a href="{{ url_for('productos') }}">Productos</a></li> 
+                {# PEQUEÑA CORRECCIÓN AQUÍ: para que 'Productos' también use url_for #}
+                <li><input type="text" class="search-box" placeholder="Buscar producto, importador..."></li> <li><a href="#quienes-somos">¿Quiénes somos?</a></li> {# AÑADE ESTA LÓGICA DE JINJA PARA MOSTRAR INICIAR SESIÓN/REGISTRARSE O NOMBRE DE USUARIO/CERRAR SESIÓN #}
+                {# Esto permite que los enlaces cambien si el usuario ya está logueado #}
+                {% if logged_in %}
+                    <li><span>Hola, {{ user_name or 'Usuario' }}</span></li>
+                    <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+                {% else %}
+                    <li><a href="{{ url_for('show_login_form') }}">Iniciar sesión</a></li> {# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #}
+                    {# ESTO ES LO SEGUNDO QUE DEBES CAMBIAR: de 'login_page' a 'show_login_form' #}
+                    <li><a href="{{ url_for('show_register_form') }}">Registrarse</a></li> {# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #}
+                    {# ESTO ESTABA BIEN, pero lo incluyo para que veas que va dentro del 'else' #}
+                {% endif %}
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+
+        <section class="hero">
+            <h1>Tienes el pase claro para confiar</h1> <p>Tu proceso de importación comienza aquí. Lo hacemos posible.</p> </section>
+
+        <section id="quienes-somos" class="about-section">
+            <h2>Clear ✓ Pass</h2> <p>En un mundo donde la seguridad y la transparencia son esenciales para el comercio internacional, Clear Pass nace con una misión: simplificar el proceso de importación y brindar confianza en cada paso. A través de innovación y compromiso, eliminamos la incertidumbre, asegurando que cada operación sea segura, eficiente y sin sorpresas. Con nosotros, importar nunca ha sido tan claro.</p>
+            </section>
+
+    </main>
+
+</body>
+</html>
