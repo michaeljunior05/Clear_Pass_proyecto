@@ -1,41 +1,50 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Clear ✓ Pass</title> <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}"> {# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #}
-    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear ✓ Pass</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+    {# Asegúrate de que home.css contenga solo los estilos para Home, o que sea un CSS compartido #}
 </head>
 <body>
 
     <header>
-        <div class="logo">Clear ✓ Pass</div> <nav>
+        <div class="logo">Clear ✓ Pass</div>
+        <nav>
             <ul>
-                <li><a href="{{ url_for('productos') }}">Productos</a></li> 
-                {# PEQUEÑA CORRECCIÓN AQUÍ: para que 'Productos' también use url_for #}
-                <li><input type="text" class="search-box" placeholder="Buscar producto, importador..."></li> <li><a href="#quienes-somos">¿Quiénes somos?</a></li> {# AÑADE ESTA LÓGICA DE JINJA PARA MOSTRAR INICIAR SESIÓN/REGISTRARSE O NOMBRE DE USUARIO/CERRAR SESIÓN #}
-                {# Esto permite que los enlaces cambien si el usuario ya está logueado #}
+                <!-- Enlace "Productos" -->
+                <li><a href="{{ url_for('productos_page') }}">Productos</a></li>
+                <!-- Ya NO se incluye la barra de búsqueda ni el botón de categorías aquí -->
+                <li><a href="#quienes-omos">¿Quiénes somos?</a></li>
                 {% if logged_in %}
                     <li><span>Hola, {{ user_name or 'Usuario' }}</span></li>
                     <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
                 {% else %}
-                    <li><a href="{{ url_for('show_login_form') }}">Iniciar sesión</a></li> {# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #}
-                    {# ESTO ES LO SEGUNDO QUE DEBES CAMBIAR: de 'login_page' a 'show_login_form' #}
-                    <li><a href="{{ url_for('show_register_form') }}">Registrarse</a></li> {# ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ #}
-                    {# ESTO ESTABA BIEN, pero lo incluyo para que veas que va dentro del 'else' #}
+                    <li><a href="{{ url_for('show_login_form') }}">Iniciar sesión</a></li>
+                    <li><a href="{{ url_for('show_register_form') }}">Registrarse</a></li>
                 {% endif %}
             </ul>
         </nav>
     </header>
 
     <main>
-
         <section class="hero">
-            <h1>Tienes el pase claro para confiar</h1> <p>Tu proceso de importación comienza aquí. Lo hacemos posible.</p> </section>
+            <h1>Tienes el pase claro para confiar</h1>
+            <p>Tu proceso de importación comienza aquí. Lo hacemos posible.</p>
+        </section>
 
-        <section id="quienes-somos" class="about-section">
-            <h2>Clear ✓ Pass</h2> <p>En un mundo donde la seguridad y la transparencia son esenciales para el comercio internacional, Clear Pass nace con una misión: simplificar el proceso de importación y brindar confianza en cada paso. A través de innovación y compromiso, eliminamos la incertidumbre, asegurando que cada operación sea segura, eficiente y sin sorpresas. Con nosotros, importar nunca ha sido tan claro.</p>
-            </section>
-
+        <section id="quienes-omos" class="about-section">
+            <h2>Clear ✓ Pass</h2>
+            <p>En un mundo donde la seguridad y la transparencia son esenciales para el comercio internacional, Clear Pass nace con una misión: simplificar el proceso de importación y brindar confianza en cada paso. A través de innovación y compromiso, eliminamos la incertidumbre, asegurando que cada operación sea segura, eficiente y sin sorpresas. Con nosotros, importar nunca ha sido tan claro.</p>
+        </section>
     </main>
 
+    <footer>
+        <p>&copy; 2025 Clear Pass. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    {# Este script.js ahora tendrá lógica condicional para ejecutar solo lo relevante a cada página #}
 </body>
 </html>

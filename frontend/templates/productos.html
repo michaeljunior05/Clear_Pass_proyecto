@@ -3,45 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Productos para Importar</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
-    </head>
-<body>
-    <div class="container">
-        <div class="content">
-            <h1>Bienvenido</h1>
-            <p>Aquí podrás ver los productos disponibles para importar.</p>
-            </div>
-    </div>
-    </body>
-</html>
-
-
-
-
-
-
-
-
-
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8"> <!-- 📌 Define la codificación de caracteres (UTF-8 para soporte universal) -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- 📌 Optimiza la vista para dispositivos móviles -->
-    <title>Clear ✓ Pass</title> <!-- 📌 Título del sitio que aparece en la pestaña del navegador -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}"> <!-- 📌 Vincula la hoja de estilos CSS -->
+    <title>Clear Pass - Productos para Importar</title> {# Título de la página #}
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body>
 
-    <!-- 📌 Encabezado con la barra de navegación -->
     <header>
-        <div class="logo">Clear ✓ Pass</div> <!-- 📌 Logo del sitio -->
+        <div class="logo">Clear ✓ Pass</div>
         <nav>
             <ul>
-                <li><a href="#">Productos</a></li> <!-- 📌 Enlace a la sección de productos -->
-                <li><input type="text" class="search-box" placeholder="Buscar producto, importador..."></li> <!-- 📌 Barra de búsqueda -->
-                <li><a href="#quienes-somos">¿Quiénes somos?</a></li> <!-- 📌 Botón que enlaza a la sección de información -->
+                <li><a href="/">Inicio</a></li> {# Enlace a la página principal #}
+                <!-- Barra de búsqueda para la página de productos -->
+                <li class="search-container">
+                    <form class="search-form">
+                        <input type="text" name="search" id="search-input" class="search-box" placeholder="Buscar producto importador...">
+                        <button type="submit" class="search-button">Buscar</button>
+                    </form>
+                </li>
+                <!-- Botón de Categorías para la página de productos -->
+                <li class="categories-dropdown-container">
+                    <button id="categories-button" class="nav-button categories-button">
+                        Categorías <i class="fas fa-angle-down"></i>
+                    </button>
+                    <div id="categories-dropdown" class="dropdown-content">
+                        <!-- Las categorías se cargarán aquí dinámicamente con JavaScript -->
+                        <p class="loading-categories">Cargando categorías...</p>
+                    </div>
+                </li>
+                <li><a href="/#quienes-somos">¿Quiénes somos?</a></li> {# Enlace a la sección en la página principal #}
                 {% if logged_in %}
                     <li><span>Hola, {{ user_name or 'Usuario' }}</span></li>
                     <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
@@ -49,27 +39,43 @@
                     <li><a href="{{ url_for('show_login_form') }}">Iniciar sesión</a></li>
                     <li><a href="{{ url_for('show_register_form') }}">Registrarse</a></li>
                 {% endif %}
-            </ul> <!-- 📌 Redirección a la página de login --> <!-- 📌 Redirección a la página de registro -->
+            </ul>
         </nav>
     </header>
 
-    <!-- 📌 Contenido principal -->
     <main>
-
-        <!-- 📌 Sección Hero: Mensaje destacado en la página principal -->
-        <section class="hero">
-            <h1>Tienes el pase claro para confiar</h1> <!-- 📌 Título principal con mensaje de confianza -->
-            <p>Tu proceso de importación comienza aquí. Lo hacemos posible.</p> <!-- 📌 Descripción motivadora -->
+        {# Sección de Bienvenida #}
+        <section class="welcome-section">
+            <div class="container">
+                <div class="content">
+                    <h1>Bienvenido</h1>
+                    <p>Aquí podrás ver los productos disponibles para importar.</p>
+                </div>
+            </div>
         </section>
 
-        <!-- 📌 Sección "¿Quiénes somos?" -->
-        <section id="quienes-somos" class="about-section">
-            <h2>Clear ✓ Pass</h2> <!-- 📌 Nombre del proyecto -->
-            <p>En un mundo donde la seguridad y la transparencia son esenciales para el comercio internacional, Clear Pass nace con una misión: simplificar el proceso de importación y brindar confianza en cada paso. A través de innovación y compromiso, eliminamos la incertidumbre, asegurando que cada operación sea segura, eficiente y sin sorpresas. Con nosotros, importar nunca ha sido tan claro.</p>
-            <!-- 📌 Explicación breve de la misión y propósito del proyecto -->
+        {# Sección de Productos con baldosas y paginación #}
+        <section class="products-section">
+            <h2>Productos de Tecnología de Importadores Chinos</h2>
+            <div class="product-list" id="product-list">
+                <p class="loading-message">Cargando productos...</p>
+            </div>
+            <!-- Controles de Paginación -->
+            <div class="pagination-controls" id="pagination-controls">
+                <button id="prev-page" class="pagination-button" disabled>Anterior</button>
+                <div id="page-numbers" class="page-numbers">
+                    <!-- Los números de página se cargarán aquí -->
+                </div>
+                <button id="next-page" class="pagination-button">Siguiente</button>
+            </div>
         </section>
-
     </main>
 
+    <footer>
+        <p>&copy; 2025 Clear Pass. Todos los derechos reservados.</p>
+    </footer>
+
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
 </html>
