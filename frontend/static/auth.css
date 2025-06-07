@@ -1,93 +1,138 @@
+/**
+ * @file auth.css
+ * @description Estilos CSS para las páginas de autenticación (login y registro).
+ * Incluye estilos base y media queries para responsividad.
+ */
+
+/* --- Estilos Globales y Reseteo --- */
 body, html {
-    height: 100%;
+    height: 100%; /* Asegura que el body y html ocupen toda la altura de la ventana */
     margin: 0;
-    font-family: 'Arial', sans-serif;
+    font-family: 'Arial', sans-serif; /* Fuente base */
+    display: flex;
+    justify-content: center; /* Centra el contenido horizontalmente */
+    align-items: center; /* Centra el contenido verticalmente */
+    background-color: #f4f4f4; /* Fondo gris claro para la página */
+    box-sizing: border-box; /* Incluye padding y border en el tamaño total del elemento */
+}
+
+/* --- Contenedor Principal (main-wrapper) --- */
+/* Este contenedor es un envoltorio para el .container, útil para añadir padding
+   en pantallas muy pequeñas sin afectar el diseño principal del .container */
+.main-wrapper {
     display: flex;
     justify-content: center;
     align-items: center;
-    background-color: #f4f4f4; /* Un fondo gris claro para la página */
+    width: 100%;
+    min-height: 100vh; /* Asegura que ocupe al menos toda la altura de la ventana */
+    padding: 20px; /* Padding por defecto para pantallas más grandes */
+    box-sizing: border-box;
 }
 
+/* --- Contenedor del Formulario (container) --- */
+/* Contenedor principal que divide la pantalla en dos secciones */
 .container {
-    width: 100vw; /* Ocupa el 60% del ancho de la ventana */
-    height: 100vh; /* Ocupa el 70% de la altura de la ventana */
-    max-width: none; /* Elimina el ancho máximo si quieres que sea más flexible */
-    max-height: none; /* Elimina la altura máxima */
-    display: flex;
-    border-radius: 0px;
-    overflow: hidden;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    width: 100%; /* Ocupa el 100% del ancho disponible de su padre (.main-wrapper) */
+    max-width: 900px; /* Ancho máximo para pantallas grandes, como ya tenías */
+    height: auto; /* La altura se ajusta al contenido */
+    min-height: 500px; /* Altura mínima para que no se vea demasiado pequeño en desktop */
+    display: flex; /* Utiliza flexbox para las secciones izquierda y derecha */
+    border-radius: 0px; /* Bordes no redondeados */
+    overflow: hidden; /* Asegura que el contenido no se desborde */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Sombra sutil para el contenedor */
+    background-color: #fff; /* Asegura el fondo blanco */
 }
 
+/* --- Secciones Izquierda y Derecha --- */
+/* Estilos comunes para ambas secciones */
 .left-section, .right-section {
-    flex: 1;
+    flex: 1; /* Cada sección ocupa el mismo espacio flexible */
     display: flex;
-    justify-content: center;
-    align-items: center;
+    justify-content: center; /* Centra el contenido horizontalmente */
+    align-items: center; /* Centra el contenido verticalmente */
 }
 
+/* Estilos específicos de la sección izquierda (logo) */
 .left-section {
-    background-color: #635BFF; /* Morado */
+    background-color: #635BFF; /* Color morado */
+    padding: 20px; /* Asegura padding */
+    color: #fff; /* Color de texto */
 }
 
+/* --- Logo Circle --- */
+/* Contenedor circular del logo */
 .logo-circle {
     background-color: white;
-    width: 300px; /* Ajusta el tamaño del círculo */
+    width: 300px; /* Tamaño del círculo */
     height: 300px;
-    border-radius: 50%;
+    border-radius: 50%; /* Forma circular */
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: row; /* Para alinear Clear, check, Pass en línea */
+    flex-direction: row; /* Alinea los elementos en fila (Clear ✔ Pass) */
 }
 
+/* Texto del logo (Clear, Pass) */
 .logo-text {
-    font-size: 30px; /* Ajusta el tamaño del texto del logo */
+    font-size: 30px; /* Tamaño del texto */
     color: black;
     margin: 0 5px; /* Espacio entre el texto y el check */
 }
 
+/* Icono de checkmark del logo */
 .logo-check {
-    color: #635BFF; /* Morado */
-    font-size: 70px; /* Ajusta el tamaño del check ori: 40*/ 
+    color: #635BFF; /* Color morado */
+    font-size: 70px; /* Tamaño del check */ 
 }
 
+/* Estilos específicos de la sección derecha (formulario) */
 .right-section {
     background-color: white;
+    padding: 40px; /* Asegura padding */
+    /* text-align: center; */ /* Se puede mover al login-box para más control */
 }
 
+/* --- Contenedor del Formulario de Login/Registro (login-box) --- */
 .login-box {
-    width: 80%;
-    padding: 40px;
-    text-align: left;
+    width: 100%; /* Ocupa el 100% del ancho de la sección derecha */
+    max-width: 350px; /* Limita el ancho del formulario */
+    padding: 0; /* Padding ya manejado por right-section */
+    text-align: center; /* CAMBIO CLAVE: Centra el texto y elementos inline dentro del login-box */
+    box-sizing: border-box; /* Incluye padding en el ancho total */
 }
 
+/* Título del formulario (Iniciar sesión, Registrarse) */
 .login-title {
-    color: #635BFF; /* Morado */
-    font-size: 50px; /* ori:28 */
+    color: #635BFF; /* Color morado */
+    font-size: 50px; /* Tamaño de fuente */
     font-weight: bold;
     margin-bottom: 10px;
 }
 
+/* Subtítulo del formulario */
 .login-subtitle {
     color: #555;
-    font-size: 32px; /* ori: 16*/
+    font-size: 32px; /* Tamaño de fuente */
     margin-bottom: 20px;
 }
 
+/* Grupo de formulario (para inputs) */
 .form-group {
     margin-bottom: 20px;
+    text-align: left; /* Asegura que los inputs y etiquetas dentro de form-group se alineen a la izquierda */
 }
 
+/* Campos de entrada de texto */
 .input-field {
-    width: 100%;
+    width: 100%; /* Ocupa todo el ancho disponible */
     padding: 12px;
     border: 1px solid #ddd;
-    border-radius: 8px;
+    border-radius: 8px; /* Bordes redondeados */
     font-size: 16px;
     box-sizing: border-box; /* Importante para que el padding no aumente el ancho */
 }
 
+/* Botón principal de login/registro */
 .login-button {
     background-color: #635BFF; /* Morado */
     color: white;
@@ -96,55 +141,52 @@ body, html {
     border-radius: 8px;
     font-size: 18px;
     cursor: pointer;
-    width: 100%;
-    transition: background-color 0.3s ease;
+    width: 100%; /* Ocupa todo el ancho disponible */
+    transition: background-color 0.3s ease; /* Transición suave al pasar el ratón */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Sombra para el botón */
 }
 
 .login-button:hover {
-    background-color: #4e4ccf;
+    background-color: #4e4ccf; /* Color más oscuro al pasar el ratón */
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
 }
 
-/* Diseño responsivo para pantallas más pequeñas */
-@media (max-width: 768px) {
-    .container {
-        flex-direction: column;
-        width: 95%;
-        height: auto;
-    }
-
-    .left-section, .right-section {
-        flex: none;
-        width: 100%;
-        padding: 30px;
-    }
-
-    .left-section {
-        min-height: 200px; /* Altura mínima para la sección izquierda */
-    }
-
-    .login-box {
-        padding: 30px;
-    }
-}
-/* ... Estilos existentes ... */
-
-.google-signin-button {
-    margin-top: 20px; /* Añade espacio encima del botón de Google */
-    display: flex;
-    justify-content: center; /* Centra el botón horizontalmente */
+/* Separador "o" */
+.separator {
+    text-align: center;
+    margin: 20px auto; /* CAMBIO: margin: 20px 0; a margin: 20px auto; para centrar el bloque */
+    color: #999;
+    font-weight: bold;
+    position: relative; /* Para posicionar las líneas */
+    font-size: 0.9em;
+    width: 100%; /* Asegura que ocupe el ancho para las líneas */
+    max-width: 200px; /* Limita el ancho del separador si es necesario */
 }
 
-/* Si necesitas ajustar el estilo del botón de Google en sí,
-   es mejor hacerlo a través de las opciones de configuración
-   de la biblioteca de Google Identity Services, si están disponibles.
-   En general, es mejor dejar que la biblioteca de Google maneje
-   el estilo del botón para asegurar la consistencia con el diseño de Google.
-*/
+.separator::before,
+.separator::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 35%; /* Ajustado el ancho de las líneas para que no se superpongan con el texto "o" */
+    height: 1px;
+    background-color: #eee;
+}
+
+.separator::before {
+    left: 0;
+}
+
+.separator::after {
+    right: 0;
+}
+
+/* Botón de Google Sign-In */
 .google-btn {
     display: flex;
     align-items: center;
-    justify-content: center;
-    background-color: #4285F4;
+    justify-content: center; /* Centra el contenido interno del botón */
+    background-color: #4285F4; /* Color azul de Google */
     color: white;
     font-weight: 600;
     border: none;
@@ -153,27 +195,164 @@ body, html {
     width: 100%;
     font-size: 14px;
     cursor: pointer;
-    gap: 10px;
-    margin-top: 20px;
+    gap: 10px; /* Espacio entre el logo y el texto */
+    margin: 20px auto 0 auto; /* CAMBIO: margin-top: 20px; a margin: 20px auto 0 auto; para centrar el bloque */
+    transition: background-color 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.google-btn:hover {
+    background-color: #357ae8; /* Azul más oscuro al pasar el ratón */
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15);
 }
 
 .google-btn img {
     width: 20px;
     height: 20px;
-    background-color: white;
+    background-color: white; /* Fondo blanco para el logo de Google */
     border-radius: 2px;
 }
 
-.separator {
-    text-align: center;
-    margin-top: 20px;
-    color: #999;
-    font-weight: bold;
+/* Estilo para enlaces */
+a {
+    color: #635BFF; /* Color morado para enlaces */
+    text-decoration: none; /* Sin subrayado por defecto */
 }
 
+a:hover {
+    text-decoration: underline; /* Subrayado al pasar el ratón */
+}
+
+/* Mensaje de éxito (usado por JS) */
 .success-message {
     color: green;
     margin-bottom: 10px;
     font-weight: bold;
     text-align: center;
+}
+
+/* --- Media Queries para Responsividad --- */
+
+/* Para pantallas con un ancho máximo de 992px (ej. tablets en horizontal, laptops pequeñas) */
+@media (max-width: 992px) {
+    .login-title {
+        font-size: 40px; /* Reduce el tamaño del título */
+    }
+    .login-subtitle {
+        font-size: 28px; /* Reduce el tamaño del subtítulo */
+    }
+    .logo-circle {
+        width: 250px; /* Reduce el tamaño del círculo del logo */
+        height: 250px;
+    }
+    .logo-text {
+        font-size: 25px;
+    }
+    .logo-check {
+        font-size: 60px;
+    }
+}
+
+/* Para pantallas con un ancho máximo de 768px (ej. tablets en vertical, móviles grandes) */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column; /* Apila las secciones izquierda y derecha */
+        width: 95%; /* Ocupa casi todo el ancho disponible dentro del main-wrapper */
+        max-width: 450px; /* Limita el ancho del contenedor en móviles */
+        height: auto; /* La altura se ajusta al contenido */
+        min-height: 80vh; /* Asegura una altura mínima en pantallas pequeñas */
+        border-radius: 10px; /* Vuelve a tener bordes redondeados en móvil */
+    }
+
+    .left-section, .right-section {
+        flex: none; /* Desactiva el flex-grow */
+        width: 100%; /* Ocupa todo el ancho */
+        padding: 30px 20px; /* Ajusta el padding */
+    }
+
+    .left-section {
+        min-height: 180px; /* Altura mínima para la sección izquierda en móvil */
+    }
+
+    .logo-circle {
+        width: 180px; /* Reduce el tamaño del círculo del logo */
+        height: 180px;
+        font-size: 1.8em; /* Ajusta el tamaño general de la fuente del logo */
+    }
+    .logo-text {
+        font-size: 22px;
+    }
+    .logo-check {
+        font-size: 50px;
+    }
+
+    .login-box {
+        padding: 20px; /* Reduce el padding del formulario */
+        width: 90%; /* Ajusta el ancho del formulario */
+    }
+
+    .login-title {
+        font-size: 35px; /* Ajusta el tamaño del título */
+    }
+
+    .login-subtitle {
+        font-size: 24px; /* Ajusta el tamaño del subtítulo */
+    }
+    .input-field,
+    .login-button,
+    .google-btn {
+        font-size: 15px; /* Ajusta el tamaño de fuente de inputs y botones */
+    }
+}
+
+/* Para pantallas muy pequeñas (ej. móviles pequeños) */
+@media (max-width: 480px) {
+    .main-wrapper {
+        padding: 10px; /* Menos padding en pantallas muy pequeñas */
+    }
+
+    .container {
+        border-radius: 5px; /* Bordes menos redondeados */
+        min-height: 70vh; /* Ajusta aún más la altura mínima */
+    }
+
+    .left-section {
+        min-height: 150px; /* Altura mínima más pequeña */
+    }
+
+    .logo-circle {
+        width: 140px;
+        height: 140px;
+        font-size: 1.5em;
+    }
+    .logo-text {
+        font-size: 18px;
+    }
+    .logo-check {
+        font-size: 40px;
+    }
+
+    .login-box {
+        padding: 15px;
+    }
+
+    .login-title {
+        font-size: 30px;
+    }
+
+    .login-subtitle {
+        font-size: 20px;
+    }
+    .input-field,
+    .login-button,
+    .google-btn {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+}
+
+/* Asegurar que las imágenes dentro de botones sean responsivas */
+.google-btn img {
+    max-width: 100%;
+    height: auto;
 }

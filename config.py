@@ -1,33 +1,35 @@
-# config.py
 import os
+from datetime import timedelta
 
 class Config:
     """
     Clase de configuración para la aplicación Flask.
-    Contiene variables de entorno y constantes necesarias para el funcionamiento.
+    Gestiona variables de entorno, claves secretas y configuraciones de servicios.
     """
-    # Clave secreta para la seguridad de la sesión de Flask.
-    # Es crucial que esta clave sea fuerte y no se exponga públicamente.
-    # En producción, se recomienda obtenerla de una variable de entorno.
-    SECRET_KEY = os.environ.get('SECRET_KEY', 'tu_clave_secreta_aqui_CAMBIAR_EN_PRODUCCION_!') # ¡CAMBIA ESTO EN PRODUCCIÓN!
-
-    # Configuración de Google OAuth 2.0
-    # El ID del cliente de Google de tu aplicación web (obtenido de Google Cloud Console)
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'your_super_secret_key_if_not_set')
+    
+    # Configuración de Google OAuth
     GOOGLE_CLIENT_ID = os.environ.get('GOOGLE_CLIENT_ID', '222270840199-pcntooj9dsvmsn79j11glth1fueaurij.apps.googleusercontent.com')
-    # La ruta al archivo JSON de secretos del cliente de Google (descargado de Google Cloud Console)
-    # AJUSTA ESTA RUTA: Asume que 'client_secret.json' está en la raíz de tu proyecto.
-    # Si está en 'Clear_Pass_proyecto/credentials/client_secret.json', la ruta sería 'credentials/client_secret.json'.
-    OOGLE_CLIENT_SECRET_FILE = os.environ.get('GOOGLE_CLIENT_SECRET_FILE', 'credentials/client_secret.json')
-    # La URI de redirección configurada en Google Cloud Console para tu aplicación.
-    # Debe coincidir exactamente.
-    GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'http://127.0.0.1:5000/auth/google/callback')
+    # ¡IMPORTANTE! Esta URI debe coincidir EXACTAMENTE con la configurada en Google Cloud Console.
+    # Además, debe coincidir con la ruta real en tu aplicación Flask (incluyendo el prefijo /api).
+    GOOGLE_REDIRECT_URI = os.environ.get('GOOGLE_REDIRECT_URI', 'http://127.0.0.1:5000/api/auth/google/callback')
+    # Ruta al archivo JSON de secretos del cliente de Google.
+    # Asegúrate de que este archivo exista en la ruta especificada.
+    GOOGLE_CLIENT_SECRET_FILE = os.environ.get('GOOGLE_CLIENT_SECRET_FILE', 'credentials/client_secret.json') # Asegúrate de que esta ruta es correcta
 
-
-    # URL base para la API externa de productos (ej. FakeStoreAPI, RapidAPI, etc.)
+    # Configuración de la API externa de productos (ej. FakeStoreAPI)
     EXTERNAL_PRODUCTS_API_BASE_URL = os.environ.get('EXTERNAL_PRODUCTS_API_BASE_URL', 'https://fakestoreapi.com')
-    # Clave de API para la API externa de productos (si es requerida)
-    EXTERNAL_PRODUCTS_API_KEY = os.environ.get('EXTERNAL_PRODUCTS_API_KEY', '') # Dejar vacío si no se usa API Key
+    EXTERNAL_PRODUCTS_API_KEY = os.environ.get('EXTERNAL_PRODUCTS_API_KEY', 'your_external_api_key_if_needed') # Si la API externa requiere una clave
 
+    # Configuración de la base de datos JSON (para JSONStorage)
+    JSON_DATABASE_PATH = os.environ.get('JSON_DATABASE_PATH', 'data.json')
 
-    # Ruta al archivo de la base de datos JSON (relativa a la raíz del proyecto)
-    JSON_DATABASE_PATH = 'database/data.json'
+    # Configuración de sesión (por defecto para Flask-Session)
+    SESSION_TYPE = "filesystem"
+    SESSION_PERMANENT = True
+    PERMANENT_SESSION_LIFETIME = timedelta(hours=24) # Duración de la sesión
+
+    # Categorías consideradas como "tecnología" para el filtrado de productos
+    # CENTRALIZADO AQUÍ PARA EVITAR DEPENDENCIAS CIRCULARES
+    TECHNOLOGY_CATEGORIES = ['electronics'] 
+    

@@ -1,94 +1,132 @@
-# backend/repositories/product_repository.py
 import logging
 from typing import List, Dict, Optional, Any
+import time 
 
-from backend.models.product import Product # Importamos nuestro modelo Product
-from backend.services.external_product_service import ExternalProductService 
+from backend.models.product import Product 
+from config import Config # AÑADIDO: Para acceder a las categorías de tecnología
+# from backend.controllers.product_controller import ProductController # ELIMINADO: Ya no es necesaria aquí para evitar circularidad
 
 logger = logging.getLogger(__name__)
 
 class ProductRepository:
     """
-    Repositorio para gestionar la obtención y el mapeo de datos de productos
-    desde una fuente externa (a través de ExternalProductService).
-    Actúa como una capa de abstracción entre el ProductController y el ExternalProductService.
+    Repositorio para acceder a los datos de productos.
+    Actúa como una capa de abstracción entre el controlador y la fuente de datos (ExternalProductService).
+    Implementa un mecanismo de caché en memoria para reducir las llamadas a la API externa.
+    La caché almacena objetos Product ya pre-filtrados por categorías de tecnología.
     """
-    def __init__(self, external_product_service: ExternalProductService): # AHORA DEPENDE DEL SERVICIO
+    def __init__(self, external_product_service): # ELIMINADO: product_controller ya no es un parámetro
         """
-        Inicializa el ProductRepository.
+        Inicializa ProductRepository.
 
         Args:
-            external_product_service (ExternalProductService): Una instancia del servicio para realizar solicitudes a la API externa.
+            external_product_service: Instancia de ExternalProductService.
         """
         self.external_product_service = external_product_service
-        logger.info("ProductRepository inicializado.")
-
-    def get_all_products(self, query: str = None, category: str = None, limit: int = None) -> List[Product]:
-        """
-        Obtiene productos de la API externa y los mapea a objetos Product.
-        Soporta filtrado por categoría y limitación de resultados.
-
-        Args:
-            query (str, optional): Término de búsqueda (no soportado por FakeStoreAPI directamente en el listado).
-            category (str, optional): Filtra productos por categoría.
-            limit (int, optional): Limita el número de resultados.
-
-        Returns:
-            list[Product]: Una lista de objetos Product.
-        """
-        products_data = None
-        if category:
-            # Si hay categoría, usar el método específico del servicio
-            products_data = self.external_product_service.get_products_by_category(category)
-        else:
-            # Si no hay categoría, obtener todos los productos
-            products_data = self.external_product_service.get_all_products()
-
-        products = []
-        if products_data:
-            # Aplicar limit si existe y si la API no lo hace (FakeStoreAPI sí lo hace en la URL pero en este modelo lo manejamos)
-            if limit is not None and limit > 0:
-                products_data = products_data[:limit] # Aplicar el límite a la lista de datos
-
-            for item in products_data:
-                try:
-                    product = Product.from_dict(item)
-                    products.append(product)
-                except ValueError as ve:
-                    logger.error(f"Error de mapeo en get_all_products: {ve}, datos originales: {item}")
-                except Exception as e:
-                    logger.error(f"Error inesperado al mapear un producto en get_all_products: {e}, datos: {item}", exc_info=True)
+        # self.product_controller = product_controller # ELIMINADO
         
-        logger.info(f"Se obtuvieron y mapearon {len(products)} productos.")
-        return products
+        self._product_cache: List[Product] | None = None 
+        self._cache_timestamp: float | None = None
+        self._cache_duration: int = 300  
+        logger.info("ProductRepository inicializado con caché en memoria (almacenará objetos Product filtrados).")
 
-    def get_product_by_id(self, product_id: str) -> Product | None:
+    def get_all_products(self) -> List[Product] | None: 
         """
-        Obtiene un producto específico por su ID de la API externa y lo mapea a un objeto Product.
-
-        Args:
-            product_id (str): El ID del producto (el ID de la API externa).
+        Obtiene todos los productos de la fuente externa, utilizando una caché en memoria.
+        Si la caché está fresca, devuelve los datos de la caché; de lo contrario,
+        hace una nueva llamada a la API externa, los filtra por tecnología, los mapea a objetos Product
+        y actualiza la caché.
 
         Returns:
-            Product | None: Un objeto Product si se encuentra, o None si no.
+            List[Product] | None: Una lista de objetos Product (ya filtrados por tecnología),
+                                  o None si no se pudieron obtener los datos.
         """
+        if self._product_cache is not None and self._cache_timestamp is not None:
+            if (time.time() - self._cache_timestamp) < self._cache_duration:
+                logger.info("Devolviendo productos desde la caché en memoria (ya filtrados y mapeados).")
+                return self._product_cache
+            else:
+                logger.info("Caché de productos expirada. Refrescando...")
+        else:
+            logger.info("Caché de productos vacía o no inicializada. Cargando y procesando productos.")
+
+        raw_products_data = self.external_product_service.get_all_products()
+        
+        if raw_products_data is None:
+            logger.warning("ExternalProductService no pudo obtener productos crudos. Caché no actualizada.")
+            return None 
+
+        processed_products: List[Product] = []
+        for product_data in raw_products_data:
+            try:
+                product_obj = Product.from_dict(product_data)
+                # AHORA USAMOS Config.TECHNOLOGY_CATEGORIES
+                if product_obj.category and product_obj.category.lower() in Config.TECHNOLOGY_CATEGORIES:
+                    product_obj.origin = "China" 
+                    processed_products.append(product_obj)
+            except ValueError as ve:
+                logger.warning(f"Producto inválido saltado durante el llenado de caché: ID {product_data.get('id')} - Error: {ve}")
+                continue 
+            except Exception as e:
+                logger.error(f"Error inesperado al procesar producto para caché ID {product_data.get('id')}: {e}", exc_info=True)
+                continue
+
+        self._product_cache = processed_products
+        self._cache_timestamp = time.time()
+        logger.info(f"Caché de productos actualizada con {len(processed_products)} objetos Product (filtrados por tecnología).")
+        return self._product_cache
+
+    def get_product_by_id(self, product_id: str) -> Product | None: 
+        """
+        Obtiene un producto específico por su ID.
+        Primero intenta buscar en la caché de todos los productos (ya filtrados y mapeados).
+        Si no lo encuentra, llama directamente al servicio externo y lo procesa.
+
+        Args:
+            product_id (str): El ID del producto.
+
+        Returns:
+            Product | None: Objeto Product si se encuentra, o None si no se encontró
+                            o si ocurrió un error.
+        """
+        logger.info(f"Solicitando producto ID {product_id}.")
+        
+        if self._product_cache:
+            for product_obj in self._product_cache:
+                if str(product_obj.id) == str(product_id):
+                    logger.info(f"Producto ID {product_id} encontrado en la caché (objeto Product).")
+                    return product_obj
+        
+        logger.info(f"Producto ID {product_id} no encontrado en caché. Llamando a servicio externo para un solo producto.")
+        product_data = self.external_product_service.get_product_by_id(product_id)
+        
+        if product_data is None:
+            logger.warning(f"ExternalProductService no encontró producto ID {product_id} o hubo un error.")
+            return None
+        
         try:
-            # Convertir a int si es necesario para el servicio, aunque la ruta lo pase como str
-            product_id_int = int(product_id) 
-        except ValueError:
-            logger.error(f"ID de producto inválido: {product_id}. Debe ser un número.")
+            product_obj = Product.from_dict(product_data)
+            # AHORA USAMOS Config.TECHNOLOGY_CATEGORIES
+            if product_obj.category and product_obj.category.lower() in Config.TECHNOLOGY_CATEGORIES:
+                product_obj.origin = "China" 
+                logger.info(f"ProductRepository recibió y procesó el producto ID {product_id} del servicio externo.")
+                return product_obj
+            else:
+                logger.warning(f"Producto ID {product_id} obtenido de API externa no es de categoría tecnológica. Ignorado.")
+                return None
+        except ValueError as ve:
+            logger.error(f"Error al mapear datos del producto {product_id} a objeto Product desde API externa: {ve}")
+            return None
+        except Exception as e:
+            logger.error(f"Error inesperado al procesar producto ID {product_id} de API externa: {e}", exc_info=True)
             return None
 
-        data = self.external_product_service.get_product_by_id(product_id_int) # Usar el servicio
+    def clear_cache(self):
+        """
+        Invalida la caché de productos en memoria, forzando un refresco desde la API externa
+        en la próxima solicitud de productos.
+        """
+        self._product_cache = None
+        self._cache_timestamp = None
+        logger.info("Caché de productos invalidada manualmente.")
 
-        if data:
-            try:
-                product = Product.from_dict(data)
-                logger.info(f"Producto con ID {product_id} obtenido y mapeado exitosamente.")
-                return product
-            except ValueError as ve:
-                logger.error(f"Error de mapeo para el producto {product_id}: {ve}, datos: {data}")
-            except Exception as e:
-                logger.error(f"Error inesperado al mapear el producto {product_id}: {e}, datos: {data}", exc_info=True)
-        logger.warning(f"No se encontró el producto con ID {product_id} en la API externa o hubo un problema.")
-        return None
