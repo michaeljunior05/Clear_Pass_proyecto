@@ -1,6 +1,7 @@
 # backend/models/product.py
 import uuid
 from datetime import datetime
+from typing import Dict, Any, Optional # Importaciones adicionales para typing
 
 class Product:
     """
@@ -100,7 +101,7 @@ class Product:
         self._rating = value
         self._updated_at = datetime.now().isoformat()
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Any]: # Añadido tipo de retorno
         """
         Convierte el objeto Product a un diccionario.
         """
@@ -110,43 +111,74 @@ class Product:
             "price": self.price,
             "description": self.description,
             "category": self.category,
-            "image_url": self.image_url,
+            "image_url": self.image_url, # Usar image_url aquí
             "rating": self.rating,
-            "external_id": self.external_id, # Incluir external_id en el diccionario
+            "external_id": self.external_id,
             "created_at": self._created_at,
             "updated_at": self._updated_at
         }
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: Dict[str, Any]): # Añadido tipo de argumento
         """
         Crea una instancia de Product a partir de un diccionario (ej. de una API externa).
         Mapea los nombres de campo de la API a los atributos del modelo.
         """
-        # Mapeo de campos de la API externa (ej. FakeStoreAPI) a nuestros atributos
-        _id = data.get("id") # FakeStoreAPI usa 'id' para el ID del producto
-        name = data.get("title") # FakeStoreAPI usa 'title' para el nombre
+        # Mapeo de campos de la API externa (ej. FakeStoreAPI o storerestapi.com) a nuestros atributos
+        # Asegurarse de que los campos existan y mapearlos correctamente
+        _id = data.get("id") 
+        name = data.get("title") # La API usa 'title' para el nombre
         price = data.get("price")
         description = data.get("description")
         category = data.get("category")
-        image_url = data.get("image") # FakeStoreAPI usa 'image' para la URL de la imagen
-        rating = data.get("rating") # Debería ser un dict {'rate': float, 'count': int}
+        image_url = data.get("image") # La API usa 'image' para la URL de la imagen
+        rating = data.get("rating")
 
-        product = cls(
-            _id=str(_id) if _id is not None else None, # Asegurarse de que el ID es un string
+        # --- VALIDACIÓN CLAVE AQUÍ ---
+        # Lista de campos esenciales que deben estar presentes y no ser None
+        essential_fields = {
+            "id": _id,
+            "name": name,
+            "price": price,
+            "description": description,
+            "category": category,
+            "image_url": image_url
+        }
+
+        for field_name, field_value in essential_fields.items():
+            if field_value is None:
+                raise ValueError(f"Datos incompletos para crear un producto. Falta el campo esencial '{field_name}'. Datos originales: {data}")
+        
+        # Convertir price a float de forma segura
+        try:
+            price = float(price)
+        except (ValueError, TypeError):
+            raise ValueError(f"El precio del producto no es un número válido: '{price}'. Datos originales: {data}")
+
+        # Manejar el rating: si no es un diccionario o es None, usar el valor por defecto
+        if not isinstance(rating, dict) or rating is None:
+            rating = {'rate': 0.0, 'count': 0}
+        else:
+            # Asegurarse de que 'rate' y 'count' son los tipos correctos dentro de rating
+            try:
+                rating['rate'] = float(rating.get('rate', 0.0))
+                rating['count'] = int(rating.get('count', 0))
+            except (ValueError, TypeError):
+                # Si el formato del rating es incorrecto, usar el valor por defecto
+                rating = {'rate': 0.0, 'count': 0}
+
+
+        # Crear la instancia de Product usando los nombres de argumento del constructor
+        return cls(
+            _id=str(_id), # Asegurarse de que el ID es un string
             name=name,
             price=price,
             description=description,
             category=category,
-            image_url=image_url,
+            image_url=image_url, 
             rating=rating,
-            external_id=str(_id) if _id is not None else None # Usar el mismo ID externo
+            external_id=str(_id) # Usar el mismo ID como external_id si no hay otro específico
         )
-        # Si la API externa no proporciona created_at/updated_at, se generarán por defecto
-        # Si los proporciona y quieres usarlos, se pueden mapear aquí:
-        # product._created_at = data.get("createdAt", product._created_at)
-        # product._updated_at = data.get("updatedAt", product._updated_at)
-        return product
 
     def __repr__(self):
         return f"<Product {self.name} (ID: {self.id})>"

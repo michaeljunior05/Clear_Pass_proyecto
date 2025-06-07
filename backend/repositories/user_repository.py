@@ -86,62 +86,92 @@ class UserRepository:
         Busca un usuario por su dirección de correo electrónico (desencriptando los almacenados).
         Retorna un objeto User.
         """
-        all_users = self.get_all_users() # Obtiene todos los usuarios como objetos User
-        for user in all_users:
-            if user.email: # Asegurarse de que el objeto User tenga un email
+        all_users_data = self.storage.get_all(self.entity_type) # Obtiene la lista de diccionarios directamente
+        logger.info(f"Obtenidos {len(all_users_data)} usuarios en formato dict para buscar por email.") # Nuevo log
+
+        for user_data in all_users_data: # Itera sobre los diccionarios de usuario
+            stored_encrypted_email = user_data.get('email')
+            
+            if stored_encrypted_email:
                 try:
-                    # Si el email ya está encriptado en el objeto User (porque así se guardó)
-                    # Necesitamos desencriptarlo para comparar con el email en texto plano
-                    # recibido.
-                    # Asumiendo que `User.from_dict` te entrega el email tal cual del JSON.
-                    # Si el email en el JSON está encriptado, este es el lugar para desencriptarlo.
-                    
-                    # Vamos a modificar User.from_dict para que el email siempre llegue desencriptado
-                    # O bien, desencriptar aquí:
-                    stored_email_data = self.storage.find_by_attribute(self.entity_type, 'id', user.id)
-                    if stored_email_data and stored_email_data[0].get('email'):
-                        decrypted_stored_email = self._decrypt_email(stored_email_data[0]['email'])
-                        if decrypted_stored_email == email:
-                            # Reemplaza el email encriptado del objeto User con el desencriptado
-                            user.email = decrypted_stored_email 
-                            return user
+                    decrypted_stored_email = self._decrypt_email(stored_encrypted_email)
+                    if decrypted_stored_email == email:
+                        # Si encontramos una coincidencia, convertimos el dict a User y retornamos
+                        user_obj = User.from_dict(user_data)
+                        # Asegúrate de que el email en el objeto retornado esté desencriptado para el controlador
+                        user_obj.email = decrypted_stored_email
+                        logger.info(f"Usuario con email '{email}' encontrado y desencriptado.")
+                        return user_obj
                 except Exception as e:
-                    logger.warning(f"Error al desencriptar email para buscar: {e}")
-                    continue # Ignorar usuarios con emails que no se pueden desencriptar
+                    logger.warning(f"Error al desencriptar email '{stored_encrypted_email}' para búsqueda: {e}")
+                    # No es un error crítico, solo significa que este email no se pudo desencriptar,
+                    # probablemente si no fue encriptado con esta clave o está corrupto.
+                    continue 
+        logger.info(f"Usuario con email '{email}' no encontrado después de revisar todos los usuarios.") # Nuevo log
         return None
-    
-    def add_user(self, user: User) -> User | None:
-        """
+    """
         Añade un nuevo objeto User, encriptando su email y hasheando su contraseña.
         Retorna el objeto User con los datos ya procesados (ID, hasheo, encriptación).
         """
+    def add_user(self, user: User) -> User | None:
         logger.info(f"Intentando añadir usuario: {user.email}")
-        
+
         # Verificar si el email ya existe
-        # Nota: find_user_by_email ahora desencripta para la comparación
         if self.find_user_by_email(user.email):
             logger.warning(f"Intento de registro con email existente: {user.email}")
-            return None # El email ya está en uso
+            return None
+
+        logger.info("Email no encontrado en el repositorio. Procediendo con el registro.") # Nuevo log
 
         # Hash de la contraseña si se proporciona
         if user.password:
-            hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
-            user.password = hashed_password
-        
+            logger.info("Hasheando contraseña...") # Nuevo log
+            try:
+                hashed_password = bcrypt.hashpw(user.password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+                user.password = hashed_password
+                logger.info("Contraseña hasheada exitosamente.") # Nuevo log
+            except Exception as e:
+                logger.error(f"Error al hashear la contraseña: {e}")
+                return None # Fallo en el hasheo
+        else:
+            logger.info("No se proporcionó contraseña (posiblemente registro por Google).") # Nuevo log
+
         # Encriptar el email
         if user.email:
-            encrypted_email = self._encrypt_email(user.email)
-            user.email = encrypted_email # Actualiza el email del objeto User a su versión encriptada
+            logger.info("Encriptando email...") # Nuevo log
+            try:
+                encrypted_email = self._encrypt_email(user.email)
+                user.email = encrypted_email
+                logger.info("Email encriptado exitosamente.") # Nuevo log
+            except Exception as e:
+                logger.error(f"Error al encriptar el email: {e}")
+                return None # Fallo en la encriptación
+        else:
+            logger.info("No se proporcionó email para encriptar.") # Nuevo log
 
-        # Guardar en JSONStorage a través de save_entity, que asigna ID si es nuevo
-        user_data = user.to_dict() # Convertir el objeto User a dict (con email encriptado y pass hasheada)
-        saved_data = self.storage.save_entity(self.entity_type, user_data)
-        
+        # Guardar en JSONStorage a través de save_entity
+        logger.info("Convirtiendo objeto User a diccionario para guardar...") # Nuevo log
+        user_data = user.to_dict()
+        logger.info("Objeto User convertido a diccionario. Procediendo a guardar en JSONStorage.") # Nuevo log
+
+        # Este es el punto crucial: la llamada a save_entity
+        try:
+            saved_data = self.storage.save_entity(self.entity_type, user_data)
+            logger.info("save_entity en JSONStorage completado.") # Nuevo log de éxito
+        except Exception as e:
+            logger.error(f"ERROR CRÍTICO: Fallo en self.storage.save_entity: {e}") # Nuevo log de error
+            return None
+
         if saved_data:
-            logger.info(f"Usuario {saved_data.get('email', '[email encriptado]')} añadido al repositorio.")
-            # Retorna el objeto User recién creado, con el ID asignado y el email desencriptado para el controlador
+            logger.info(f"Usuario {saved_data.get('email', '[email encriptado]')} añadido al repositorio. Desencriptando para retorno.")
             saved_user_obj = User.from_dict(saved_data)
+            # Asegúrate de que el email en el objeto retornado esté desencriptado para el controlador
+            # Nota: Si el email está encriptado en saved_data, deberías desencriptarlo aquí.
+            # user_obj.email = self._decrypt_email(user_data['email']) # Si from_dict lo carga encriptado
+
+            # Si User.from_dict ya maneja el email encriptado/desencriptado, entonces solo:
             saved_user_obj.email = self._decrypt_email(saved_user_obj.email) # Desencriptar para devolver al controlador
+            logger.info(f"Usuario {saved_user_obj.email} guardado y desencriptado para retorno.")
             return saved_user_obj
         else:
             logger.error(f"Fallo al guardar el usuario {user.email}.")
@@ -284,4 +314,5 @@ class UserRepository:
             bool: True si el usuario fue eliminado, False si no se encontró.
         """
         return self.storage.delete_entity(self.entity_type, user_id)
+    
     

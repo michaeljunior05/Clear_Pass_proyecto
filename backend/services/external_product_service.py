@@ -1,7 +1,7 @@
 # backend/services/external_product_service.py
 import requests
 import logging
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class ExternalProductService:
         self.base_url = base_url
         logger.info(f"ExternalProductService inicializado con base_url: {self.base_url}")
 
-    def get_all_products(self) -> List[Dict] | None:
+    def get_all_products(self) -> List[Dict[str, Any]] | None:
         """
         Obtiene todos los productos de la API externa.
 
@@ -31,26 +31,43 @@ class ExternalProductService:
                                o None si ocurre un error.
         """
         endpoint = f"{self.base_url}/products"
+        logger.info(f"Intentando obtener todos los productos de: {endpoint}")
         try:
-            response = requests.get(endpoint, timeout=5) # Añadir timeout para evitar esperas infinitas
-            response.raise_for_status() # Lanza una excepción para errores HTTP (4xx o 5xx)
+            response = requests.get(endpoint, timeout=10)
+            response.raise_for_status()
+            
             data = response.json()
-            logger.info(f"Productos obtenidos de {endpoint}. Cantidad: {len(data['data'])}")
-            return data['data'] # La API devuelve los productos dentro de una clave 'data'
+            
+            # --- CAMBIO CLAVE AQUÍ: Esperamos una LISTA directamente ---
+            if isinstance(data, list):
+                logger.info(f"Productos obtenidos de {endpoint}. Cantidad: {len(data)}")
+                return data 
+            else:
+                logger.error(f"Formato de respuesta inesperado al obtener productos de {endpoint}. "
+                             f"Se esperaba una lista de productos directamente. "
+                             f"Respuesta recibida (tipo: {type(data)}): {data}")
+                return None
+
         except requests.exceptions.Timeout:
-            logger.error(f"Tiempo de espera agotado al obtener productos de: {endpoint}")
+            logger.error(f"Tiempo de espera agotado al obtener productos de: {endpoint}. La API no respondió a tiempo.")
             return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error al obtener productos de {endpoint}: {e}")
+        except requests.exceptions.ConnectionError:
+            logger.error(f"Error de conexión al intentar acceder a {endpoint}. La API podría estar inaccesible, la URL es incorrecta o hay un problema de red.")
             return None
-        except KeyError:
-            logger.error(f"Formato de respuesta inesperado al obtener productos de {endpoint}. Falta la clave 'data'.")
+        except requests.exceptions.HTTPError as http_err:
+            logger.error(f"Error HTTP al obtener productos de {endpoint}: {http_err} - Código de estado: {response.status_code} - Respuesta: {response.text}")
+            return None
+        except requests.exceptions.RequestException as req_err:
+            logger.error(f"Error general de solicitud al obtener productos de {endpoint}: {req_err}")
+            return None
+        except ValueError as json_err:
+            logger.error(f"Error al decodificar la respuesta JSON de {endpoint}: {json_err} - Contenido: {response.text}")
             return None
         except Exception as e:
             logger.error(f"Error inesperado al obtener productos de {endpoint}: {e}", exc_info=True)
             return None
 
-    def get_product_by_id(self, product_id: str) -> Dict | None:
+    def get_product_by_id(self, product_id: str) -> Dict[str, Any] | None:
         """
         Obtiene un producto específico de la API externa por su ID.
 
@@ -62,27 +79,37 @@ class ExternalProductService:
                          o si ocurre un error.
         """
         endpoint = f"{self.base_url}/products/{product_id}"
+        logger.info(f"Intentando obtener producto ID {product_id} de: {endpoint}")
         try:
-            response = requests.get(endpoint, timeout=5)
+            response = requests.get(endpoint, timeout=10)
             response.raise_for_status()
+            
             data = response.json()
-            if data and data.get('data'):
+            
+            # --- CAMBIO CLAVE AQUÍ: Esperamos un DICCIONARIO directamente ---
+            if isinstance(data, dict) and data:
                 logger.info(f"Producto ID {product_id} obtenido de {endpoint}.")
-                return data['data'] # La API devuelve el producto dentro de una clave 'data'
+                return data
             else:
-                logger.warning(f"Producto ID {product_id} no encontrado o respuesta vacía de {endpoint}.")
+                logger.warning(f"Producto ID {product_id} no encontrado o formato de respuesta inesperado de {endpoint}. "
+                               f"Se esperaba un diccionario. Respuesta recibida (tipo: {type(data)}): {data}")
                 return None
         except requests.exceptions.Timeout:
-            logger.error(f"Tiempo de espera agotado al obtener producto ID {product_id} de: {endpoint}")
+            logger.error(f"Tiempo de espera agotado al obtener producto ID {product_id} de: {endpoint}. La API no respondió a tiempo.")
             return None
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error al obtener producto ID {product_id} de {endpoint}: {e}")
-            # Si el error es 404 Not Found, la API devuelve 'Product not found', que es un caso de None
+        except requests.exceptions.ConnectionError:
+            logger.error(f"Error de conexión al intentar acceder a {endpoint}. La API podría estar inaccesible, la URL es incorrecta o hay un problema de red.")
+            return None
+        except requests.exceptions.HTTPError as http_err:
+            logger.error(f"Error HTTP al obtener producto ID {product_id} de {endpoint}: {http_err} - Código de estado: {response.status_code} - Respuesta: {response.text}")
             if response.status_code == 404:
                 return None
             return None
-        except KeyError:
-            logger.error(f"Formato de respuesta inesperado al obtener producto ID {product_id} de {endpoint}. Falta la clave 'data'.")
+        except requests.exceptions.RequestException as req_err:
+            logger.error(f"Error general de solicitud al obtener producto ID {product_id} de {endpoint}: {req_err}")
+            return None
+        except ValueError as json_err:
+            logger.error(f"Error al decodificar la respuesta JSON de {endpoint}: {json_err} - Contenido: {response.text}")
             return None
         except Exception as e:
             logger.error(f"Error inesperado al obtener producto ID {product_id} de {endpoint}: {e}", exc_info=True)
