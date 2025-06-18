@@ -1,16 +1,18 @@
-from flask import Blueprint, request, jsonify
 import logging
+from flask import Blueprint, jsonify, request
 from backend.controllers.product_controller import ProductController
 
 logger = logging.getLogger(__name__)
 
-product_bp = Blueprint('product_api', __name__, url_prefix='/api')
+# Crear un Blueprint para las rutas de productos
+product_bp = Blueprint('product_bp', __name__, url_prefix='/api')
 
-_product_controller: ProductController = None
+_product_controller: ProductController = None # Type hint para asegurar el tipo del controlador
 
 def init_product_routes(controller: ProductController):
     """
-    Función para inicializar las rutas de productos con el controlador adecuado.
+    Inicializa las rutas de productos con el controlador de productos.
+    Esta función es llamada una vez al iniciar la aplicación para inyectar el controlador.
     """
     global _product_controller
     _product_controller = controller
@@ -19,91 +21,63 @@ def init_product_routes(controller: ProductController):
 @product_bp.route('/products', methods=['GET'])
 def get_products():
     """
-    Endpoint de la API para obtener productos con filtros de búsqueda, categoría y paginación.
+    Ruta para obtener productos con paginación, búsqueda y filtrado por categoría.
+    Parámetros de query:
+    - query (str): Término de búsqueda en nombre o descripción.
+    - category (str): Categoría de productos.
+    - page (int): Número de página (por defecto 1).
+    - limit (int): Cantidad de productos por página (por defecto 10).
     """
-    logger.info("Petición GET recibida en /api/products")
     if not _product_controller:
-        logger.error("ProductController no inicializado para las rutas de productos.")
-        return jsonify({'message': 'Error interno del servidor: controlador no inicializado'}), 500
+        logger.error("ProductController no está inicializado en product_routes.")
+        return jsonify({"message": "Servicio de productos no disponible."}), 500
 
-    query = request.args.get('query')
-    category = request.args.get('category')
+    query = request.args.get('query', '')
+    category = request.args.get('category', '')
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
+
+    logger.info(f"Petición recibida en /api/products con query='{query}', category='{category}', page={page}, limit={limit}")
     
-    limit_str = request.args.get('limit', '10') 
-    page_str = request.args.get('page', '1')   
+    # CORREGIDO: Llamar a get_paginated_products
+    products, total_pages = _product_controller.get_paginated_products(query=query, category=category, page=page, limit=limit)
 
-    try:
-        limit = int(limit_str)
-        page = int(page_str)
-        if limit <= 0 or page <= 0:
-            logger.warning(f"Parámetros de paginación inválidos: limit={limit_str}, page={page_str}. Deben ser números positivos.")
-            return jsonify({'message': 'Limit y Page deben ser números positivos.'}), 400
-        if limit > 100: 
-            limit = 100
-            logger.warning(f"El límite solicitado {limit_str} excede el máximo permitido. Se usará el límite de 100.")
-    except ValueError:
-        logger.warning(f"Parámetros de paginación no numéricos: limit='{limit_str}', page='{page_str}'")
-        return jsonify({'message': 'Los parámetros limit y page deben ser números enteros.'}), 400
+    return jsonify({
+        "products": products,
+        "total_pages": total_pages,
+        "current_page": page,
+        "limit": limit
+    }), 200
 
-    result = _product_controller.get_products(query=query, category=category, page=page, limit=limit)
-    
-    if result is None:
-        logger.error("El controlador de productos devolvió None al obtener productos.")
-        return jsonify({'message': 'Error al obtener productos'}), 500 
-
-    products_as_dict = result.get('products', [])
-    total_pages = result.get('total_pages', 0)
-    
-    logger.info(f"Devolviendo {len(products_as_dict)} productos para la página {page} de {total_pages}. Consulta: query='{query}', category='{category}'.")
-    return jsonify({'products': products_as_dict, 'total_pages': total_pages}), 200
-
-@product_bp.route('/products/<string:product_id>', methods=['GET'])
-def get_product_detail(product_id: str):
+@product_bp.route('/products/<int:product_id>', methods=['GET'])
+def get_product_detail(product_id):
     """
-    Endpoint de la API para obtener los detalles de un producto específico por su ID.
+    Ruta para obtener los detalles de un producto específico por su ID.
     """
-    logger.info(f"Petición GET recibida en /api/products/{product_id}")
     if not _product_controller:
-        logger.error("ProductController no inicializado para las rutas de productos.")
-        return jsonify({'message': 'Error interno del servidor: controlador no inicializado'}), 500
+        logger.error("ProductController no está inicializado en product_routes.")
+        return jsonify({"message": "Servicio de productos no disponible."}), 500
+    
+    logger.info(f"Petición recibida en /api/products/{product_id}")
+    product = _product_controller.get_product_detail(product_id)
 
-    product = _product_controller.get_product_details(product_id)
     if product:
-        logger.info(f"Detalles del producto ID {product_id} obtenidos exitosamente.")
-        return jsonify(product.to_dict()), 200
+        return jsonify(product), 200
     else:
-        logger.warning(f"Producto con ID {product_id} no encontrado o no cumple los criterios de filtro de tecnología.")
-        return jsonify({'message': f'Producto con ID {product_id} no encontrado o no es una categoría tecnológica válida.'}), 404
+        logger.warning(f"Producto con ID {product_id} no encontrado.")
+        return jsonify({"message": "Producto no encontrado o no disponible."}), 404
 
 @product_bp.route('/products/categories', methods=['GET'])
 def get_product_categories():
     """
-    Endpoint de la API para obtener una lista de categorías de productos.
+    Ruta para obtener todas las categorías únicas de productos.
     """
-    logger.info("Petición GET recibida en /api/products/categories")
     if not _product_controller:
-        logger.error("ProductController no inicializado para las rutas de productos.")
-        return jsonify({'message': 'Error interno del servidor: controlador no inicializado'}), 500
+        logger.error("ProductController no está inicializado en product_routes.")
+        return jsonify({"message": "Servicio de productos no disponible."}), 500
+    
+    logger.info("Petición recibida en /api/products/categories")
+    # CORREGIDO: Llamar a get_categories
+    categories = _product_controller.get_categories()
 
-    categories = _product_controller.get_product_categories()
-    
-    if categories is None: 
-        logger.error("El controlador de productos devolvió None al obtener categorías.")
-        return jsonify({'message': 'Error al obtener categorías'}), 500
-    
-    logger.info(f"Devolviendo {len(categories)} categorías.")
     return jsonify(categories), 200
-
-@product_bp.route('/products/clear-cache', methods=['POST']) # Usar POST para acciones de modificar estado
-def clear_product_cache():
-    """
-    Endpoint para invalidar manualmente la caché de productos en el servidor.
-    """
-    logger.info("Petición POST recibida en /api/products/clear-cache para invalidar la caché.")
-    if not _product_controller:
-        logger.error("ProductController no inicializado para las rutas de productos.")
-        return jsonify({'message': 'Error interno del servidor: controlador no inicializado'}), 500
-    
-    _product_controller.clear_product_cache()
-    logger.info("Caché de productos invalidada exitosamente.")
-    return jsonify({'message': 'Caché de productos invalidada exitosamente.'}), 200

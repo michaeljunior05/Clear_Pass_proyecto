@@ -1,0 +1,505 @@
+/* frontend/static/home.css */
+
+/* --- Estilos Generales y Reseteo --- */
+body, html {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif; /* Usar la fuente Inter */
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Base para elementos flexibles */
+.flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* --- Header --- */
+header {
+    /* Tailwind se encargará de gran parte, pero podemos añadir algunos overrides */
+    z-index: 20; /* Asegura que el header esté por encima de otros elementos */
+}
+
+header .logo {
+    display: flex;
+    align-items: center;
+    font-size: 1.8rem; /* Tamaño de fuente para el texto del logo si se usa */
+    font-weight: bold;
+    color: #635BFF; /* Morado primario */
+}
+
+header .logo span {
+    color: #000; /* Texto "Clear" y "Pass" en negro */
+}
+
+/* Para el icono de imagen del logo */
+header .logo img {
+    height: 2.5rem; /* h-10 en Tailwind, ajuste si es necesario */
+    width: auto;
+    margin-right: 0.25rem; /* Para separar del texto si se combina */
+}
+
+
+/* Search Container within Nav */
+.search-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-form {
+    display: flex;
+    align-items: center;
+    border-radius: 9999px; /* rounded-full */
+    padding: 0.5rem 1rem; /* py-2 px-4 */
+    background-color: #f7fafc; /* gray-100 */
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+    transition: all 0.2s ease-in-out;
+}
+
+.search-form:focus-within {
+    box-shadow: 0 0 0 2px rgba(99, 91, 255, 0.5); /* ring-2 ring-primary-purple */
+}
+
+.search-box {
+    border: none;
+    background: transparent;
+    outline: none;
+    width: 100%;
+    color: #2d3748; /* gray-800 */
+    font-size: 1rem;
+    padding: 0;
+}
+
+.search-box::placeholder {
+    color: #a0aec0; /* gray-500 */
+}
+
+.search-form button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-left: 0.5rem;
+    color: #a0aec0; /* gray-500 */
+    transition: color 0.2s ease-in-out;
+}
+
+/* Estilo para la imagen de la lupa dentro del botón de búsqueda */
+.search-form button img {
+    height: 1.25rem; /* h-5 en Tailwind */
+    width: 1.25rem; /* w-5 en Tailwind */
+    object-fit: contain;
+}
+
+
+/* Dropdown para Categorías */
+.categories-dropdown-container {
+    position: relative;
+}
+
+.dropdown-content {
+    display: none; /* Oculto por defecto, se muestra con JS */
+    position: absolute;
+    background-color: white;
+    min-width: 160px;
+    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
+    z-index: 1;
+    border-radius: 0.5rem; /* rounded-lg */
+    overflow: hidden;
+    left: 50%; /* Centrar el dropdown bajo el botón */
+    transform: translateX(-50%);
+    top: 100%; /* Justo debajo del botón */
+    margin-top: 0.5rem;
+}
+
+.dropdown-content a {
+    color: black;
+    padding: 12px 16px;
+    text-decoration: none;
+    display: block;
+    text-align: left;
+}
+
+.dropdown-content a:hover {
+    background-color: #f1f1f1;
+}
+
+.dropdown-content.show {
+    display: block;
+}
+
+/* General button styles for navigation */
+.nav-button {
+    cursor: pointer;
+    font-weight: 600; /* semibold */
+    transition: background-color 0.2s ease-in-out;
+}
+
+/* --- Hero Section (Específico para home.html) --- */
+.hero-section {
+    position: relative;
+    height: 100vh; /* Ocupa la altura completa de la ventana */
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    color: white;
+    padding: 1rem;
+}
+
+.hero-section::before { /* Overlay oscuro para el fondo */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.4); /* 40% de opacidad negra */
+    z-index: 1;
+}
+
+.hero-section h1 {
+    font-size: 2.5rem; /* text-4xl */
+    font-weight: 800; /* font-extrabold */
+    line-height: 1.2;
+    margin-bottom: 1rem;
+    position: relative;
+    z-index: 2;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.5); /* drop-shadow-lg */
+}
+
+.hero-section p {
+    font-size: 1.125rem; /* text-lg */
+    font-weight: 500; /* font-medium */
+    margin-bottom: 2rem;
+    position: relative;
+    z-index: 2;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.4); /* drop-shadow-md */
+}
+
+/* Ajuste para que la sección "Quiénes Somos" se superponga */
+#quienes-somos {
+    margin-top: -6rem; /* Mueve la sección hacia arriba */
+    position: relative;
+    z-index: 20; /* Asegura que esté por encima de la hero section */
+}
+
+
+/* --- Product Section --- */
+.products-section {
+    background-color: #ffffff;
+    border-radius: 0.5rem; /* rounded-lg */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+}
+
+/* Product List / Grid */
+.product-list {
+    /* Tailwind grid clases handles most of this: grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 */
+    /* If you want a horizontal scrollable carousel: */
+    /* overflow-x: auto; */
+    /* white-space: nowrap; */
+    /* padding-bottom: 1rem; */
+}
+
+.product-item {
+    background-color: #fff;
+    border-radius: 0.75rem; /* rounded-xl */
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-md */
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Empuja el botón de detalles hacia abajo */
+    height: 100%; /* Asegura que todas las tarjetas tengan la misma altura */
+}
+
+.product-item:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+}
+
+.product-image {
+    width: 100%;
+    height: 200px; /* Altura fija para las imágenes */
+    object-fit: contain; /* Ajusta la imagen sin recortarla, manteniendo el aspecto */
+    background-color: #f8f8f8; /* Fondo claro para imágenes transparentes/pequeñas */
+    padding: 1rem; /* Espacio alrededor de la imagen */
+}
+
+.product-item h3 {
+    font-size: 1.25rem; /* text-xl */
+    font-weight: bold;
+    color: #2d3748; /* gray-800 */
+    margin-top: 1rem;
+    padding: 0 1.25rem; /* px-5 */
+    min-height: 3.5rem; /* Espacio para nombres largos */
+}
+
+.product-item p {
+    font-size: 0.95rem; /* text-sm */
+    color: #4a5568; /* gray-700 */
+    padding: 0 1.25rem; /* px-5 */
+    flex-grow: 1; /* Permite que la descripción ocupe el espacio restante */
+}
+
+.product-price {
+    font-size: 1.5rem; /* text-2xl */
+    font-weight: bold;
+    color: #1a202c; /* gray-900 */
+    margin-top: 0.5rem;
+    padding: 0 1.25rem; /* px-5 */
+}
+
+/* Etiquetas como "Envío gratis", "COMPRA INTERNACIONAL" */
+.product-meta {
+    font-size: 0.875rem; /* text-sm */
+    color: #4CAF50; /* Verde para envío gratis */
+    margin-top: 0.25rem;
+    padding: 0 1.25rem; /* px-5 */
+    font-weight: 500;
+}
+
+.view-details-button {
+    background-color: #635BFF; /* primary-purple */
+    color: white;
+    padding: 0.75rem 1rem; /* py-3 px-4 */
+    border: none;
+    border-radius: 0.5rem; /* rounded-lg */
+    font-size: 1rem;
+    cursor: pointer;
+    width: calc(100% - 2.5rem); /* Ocupa casi todo el ancho, dejando padding */
+    margin: 1.25rem; /* ml-5 mr-5 mb-5 */
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+    font-weight: 600;
+}
+
+.view-details-button:hover {
+    background-color: #4e4ccf; /* purple-700 */
+    transform: translateY(-2px);
+}
+
+/* Product Detail Page Specifics */
+.product-detail-container {
+    display: flex;
+    flex-direction: column; /* Apilado por defecto */
+    gap: 2rem;
+    background-color: white;
+    padding: 2rem;
+    border-radius: 0.75rem;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+}
+
+.product-detail-container .product-image {
+    width: 100%;
+    max-height: 400px; /* Altura máxima para la imagen de detalle */
+    object-fit: contain;
+    background-color: #f8f8f8;
+    padding: 1.5rem;
+    border-radius: 0.75rem;
+}
+
+.product-detail-info {
+    flex-grow: 1; /* Permite que ocupe el espacio restante */
+}
+
+.product-detail-title {
+    font-size: 2.5rem; /* text-4xl */
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 1rem;
+}
+
+.product-detail-category,
+.product-detail-origin,
+.product-detail-description {
+    font-size: 1.125rem; /* text-lg */
+    color: #4a5568;
+    margin-bottom: 0.5rem;
+}
+
+.product-detail-price {
+    font-size: 2rem; /* text-3xl */
+    font-weight: bold;
+    color: #1a202c;
+    margin-top: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.product-detail-rating {
+    font-size: 1rem;
+    color: #4a5568;
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+}
+
+.product-detail-rating i {
+    color: gold; /* Color de las estrellas */
+    margin-left: 0.5rem;
+}
+
+.add-to-cart-detail-button {
+    background-color: #635BFF;
+    color: white;
+    padding: 1rem 2rem;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 1.125rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+    margin-top: 1.5rem;
+    width: 100%; /* Ocupa todo el ancho disponible */
+}
+
+.add-to-cart-detail-button:hover {
+    background-color: #4e4ccf;
+    transform: translateY(-2px);
+}
+
+
+/* Pagination Controls */
+.pagination-controls {
+    /* Tailwind flex, justify-center, items-center, space-x-4 se encarga del layout */
+}
+
+.pagination-button {
+    /* Tailwind bg-primary-purple, text-white, px-6, py-3, rounded-full, shadow-md, hover:bg-purple-700, disabled:opacity-50, disabled:cursor-not-allowed, transition, font-semibold */
+}
+
+.page-numbers button {
+    background-color: #edf2f7; /* gray-200 */
+    color: #2d3748; /* gray-800 */
+    padding: 0.5rem 1rem; /* py-2 px-4 */
+    border: none;
+    border-radius: 0.5rem; /* rounded-md */
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.page-numbers button:hover:not(.active) {
+    background-color: #e2e8f0; /* gray-300 */
+    transform: translateY(-2px);
+}
+
+.page-numbers button.active {
+    background-color: #635BFF; /* primary-purple */
+    color: white;
+    font-weight: bold;
+    cursor: default;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Media Queries para responsividad detallada */
+@media (min-width: 768px) {
+    .product-detail-container {
+        flex-direction: row; /* Horizontal en desktop */
+    }
+    .product-detail-container .product-image {
+        width: 40%; /* Imagen ocupa un porcentaje del ancho */
+        height: auto; /* Altura auto para mantener aspecto */
+        max-width: 400px; /* Ancho máximo para la imagen */
+    }
+    .add-to-cart-detail-button {
+        width: auto; /* Ancho automático en desktop */
+    }
+    .hero-section h1 { /* Ajuste de tamaño de fuente para desktop */
+        font-size: 4rem; /* 64px */
+    }
+    .hero-section p { /* Ajuste de tamaño de fuente para desktop */
+        font-size: 1.5rem; /* 24px */
+    }
+}
+
+/* Responsive navigation for mobile */
+@media (max-width: 767px) {
+    header nav {
+        display: none; /* Oculta la navegación por defecto en móviles */
+        flex-direction: column;
+        align-items: center;
+        width: 100%;
+        background-color: white;
+        position: absolute;
+        top: 6rem; /* Debajo del header */
+        left: 0;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding-bottom: 1rem;
+        border-radius: 0 0 0.75rem 0.75rem; /* Esquinas redondeadas abajo */
+    }
+
+    header nav.active {
+        display: flex; /* Muestra la navegación cuando está activa */
+    }
+
+    header nav ul {
+        flex-direction: column;
+        width: 100%;
+        text-align: center;
+    }
+
+    header nav ul li {
+        width: 100%;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+
+    header nav ul li:last-child {
+        border-bottom: none;
+    }
+
+    header nav ul li a,
+    header nav ul li span,
+    header nav ul li .nav-button {
+        display: block;
+        padding: 0.5rem 0;
+        width: 100%;
+    }
+
+    .search-form {
+        width: 90%; /* Ajustar el ancho de la barra de búsqueda en móvil */
+        margin: 0.5rem auto;
+    }
+
+    .categories-dropdown-container .dropdown-content {
+        position: static; /* Cambiar a estático para que fluya en el contenido */
+        transform: none;
+        width: 90%;
+        margin: 0 auto;
+        border: none;
+        box-shadow: none;
+        text-align: center;
+    }
+
+    .categories-dropdown-container .dropdown-content a {
+        padding: 8px 0;
+    }
+
+    .hero-section { /* Ajustes para móviles */
+        height: 70vh; /* Menos alto en móviles */
+    }
+    .hero-section h1 {
+        font-size: 2.5rem; /* 40px */
+    }
+    .hero-section p {
+        font-size: 1.125rem; /* 18px */
+    }
+
+    #quienes-somos {
+        margin-top: -3rem; /* Menos superposición en móviles */
+    }
+}
+
+/* Para pantallas muy pequeñas (ej. móviles pequeños) */
+@media (max-width: 480px) {
+    .hero-section h1 {
+        font-size: 2rem; /* 32px */
+    }
+    .hero-section p {
+        font-size: 1rem; /* 16px */
+    }
+}

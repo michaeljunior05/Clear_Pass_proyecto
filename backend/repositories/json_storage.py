@@ -94,7 +94,6 @@ class JSONStorage:
         """
         Guarda los datos del diccionario en memoria de vuelta al archivo JSON.
         """
-        # ELIMINADO: with self._lock: # Este bloqueo se maneja en los métodos públicos que llaman a _save_data
         logger.info(f"Guardando datos en {self._data_file}...")
         try:
             with open(self._data_file, 'w', encoding='utf-8') as f:

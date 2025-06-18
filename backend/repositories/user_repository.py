@@ -9,7 +9,6 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-
 class UserRepository:
     """
     Gestiona la persistencia de objetos User utilizando JSONStorage.
