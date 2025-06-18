@@ -3,79 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clear Pass - Productos para Importar</title> {# Título de la página #}
-    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>Clear Pass - Productos para Importar</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], // Usar Inter como fuente principal
+                    },
+                    colors: {
+                        'primary-purple': '#635BFF', // Tu color morado
+                        'secondary-blue': '#4285F4', // Azul de Google
+                        'gray-bg': '#f4f4f4', // Fondo gris claro
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Tu CSS personalizado para estilos específicos no cubiertos por Tailwind o overrides -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='products.css') }}">
+    
 </head>
-<body>
+<body class="font-sans bg-gray-bg min-h-screen flex flex-col">
 
-    <header>
-        <div class="logo">Clear ✓ Pass</div>
-        <nav>
-            <ul>
-                <li><a href="/">Inicio</a></li> {# Enlace a la página principal #}
+    <header class="bg-white shadow-md p-4 md:px-8 flex items-center justify-between flex-wrap">
+        <!-- Logo -->
+        <div class="flex items-center space-x-2 text-primary-purple text-3xl font-bold cursor-pointer" onclick="window.location.href='/'">
+            <span class="text-black">Clear</span>
+            <i class="fas fa-check-circle text-primary-purple text-4xl hidden"></i> <!-- Icono Font Awesome oculto -->
+            <img src="{{ url_for('static', filename='images/clear_logo.png') }}" alt="Clear Pass Logo" class="h-10 w-auto">
+        </div>
+
+        <!-- Botón de menú hamburguesa para móviles -->
+        <button id="menu-button" class="md:hidden text-gray-700 focus:outline-none focus:ring-2 focus:ring-primary-purple p-2 rounded-md">
+            <i class="fas fa-bars text-2xl"></i>
+        </button>
+
+        <!-- Navegación principal (oculta en móvil por defecto, visible en md y superior) -->
+        <nav id="main-nav" class="hidden md:flex flex-col md:flex-row md:items-center w-full md:w-auto mt-4 md:mt-0 space-y-2 md:space-y-0 md:space-x-6 text-lg">
+            <ul class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-6 w-full md:w-auto items-center">
+                <li><a href="/" class="text-gray-700 hover:text-primary-purple transition duration-200">Inicio</a></li>
+                
                 <!-- Barra de búsqueda para la página de productos -->
-                <li class="search-container">
-                    <form class="search-form">
-                        <input type="text" name="search" id="search-input" class="search-box" placeholder="Buscar producto importador...">
-                        <button type="submit" class="search-button">Buscar</button>
+                <li class="w-full md:w-auto">
+                    <form class="search-form flex items-center bg-gray-100 rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary-purple transition duration-200">
+                        <input type="text" name="search" id="search-input" class="search-box bg-transparent outline-none w-full text-gray-800 placeholder-gray-500" placeholder="Buscar producto importador...">
+                        <button type="submit" class="text-gray-500 hover:text-primary-purple transition duration-200 ml-2">
+                            <img src="{{ url_for('static', filename='images/Lupa_transparente.png') }}" alt="Buscar" class="h-5 w-5">
+                        </button>
                     </form>
                 </li>
+                
                 <!-- Botón de Categorías para la página de productos -->
-                <li class="categories-dropdown-container">
-                    <button id="categories-button" class="nav-button categories-button">
-                        Categorías <i class="fas fa-angle-down"></i>
+                <li class="relative categories-dropdown-container">
+                    <button id="categories-button" class="nav-button categories-button bg-gray-100 text-gray-700 hover:bg-gray-200 px-4 py-2 rounded-full flex items-center space-x-2 transition duration-200">
+                        <span>Categorías</span>
+                        <i class="fas fa-angle-down"></i> <!-- Se mantiene el icono de flecha si se usa, o reemplazar con imagen si existe -->
                     </button>
-                    <div id="categories-dropdown" class="dropdown-content">
+                    <div id="categories-dropdown" class="dropdown-content absolute bg-white shadow-lg rounded-lg mt-2 w-48 z-10 hidden">
                         <!-- Las categorías se cargarán aquí dinámicamente con JavaScript -->
-                        <p class="loading-categories">Cargando categorías...</p>
+                        <p class="p-3 text-gray-500">Cargando categorías...</p>
                     </div>
                 </li>
-                <li><a href="/#quienes-somos">¿Quiénes somos?</a></li> {# Enlace a la sección en la página principal #}
+                
+                <!-- Enlaces de autenticación / Perfil -->
                 {% if logged_in %}
-                    <li><span>Hola, {{ user_name or 'Usuario' }}</span></li>
-                    <li><a href="{{ url_for('logout') }}">Cerrar sesión</a></li>
+                    <li class="flex items-center space-x-2 text-primary-purple">
+                        <span class="ml-2">Hola, {{ user_name or 'Usuario' }}</span>
+                    </li>
+                    <li><a href="{{ url_for('logout') }}" class="text-gray-700 hover:text-primary-purple transition duration-200">Cerrar sesión</a></li>
                 {% else %}
-                    <li><a href="{{ url_for('show_login_form') }}">Iniciar sesión</a></li>
-                    <li><a href="{{ url_for('show_register_form') }}">Registrarse</a></li>
+                    <li><a href="{{ url_for('auth_api.login') }}" class="text-gray-700 hover:text-primary-purple transition duration-200">Iniciar sesión</a></li>
+                    <li>
+                        <a href="{{ url_for('auth_api.register') }}" class="bg-primary-purple text-white px-4 py-2 rounded-full hover:bg-purple-700 transition duration-200 shadow-md">
+                            Registrarse
+                        </a>
+                    </li>
                 {% endif %}
             </ul>
         </nav>
     </header>
 
-    <main>
-        {# Sección de Bienvenida #}
-        <section class="welcome-section">
-            <div class="container">
-                <div class="content">
-                    <h1>Bienvenido</h1>
-                    <p>Aquí podrás ver los productos disponibles para importar.</p>
-                </div>
-            </div>
+    <main class="flex-grow container mx-auto px-4 py-8">
+        <!-- Sección de Bienvenida (contenido específico de productos) -->
+        <section class="welcome-section text-center mb-12 bg-primary-purple text-white py-12 rounded-lg shadow-md">
+            <h1 class="text-5xl font-extrabold mb-4">Bienvenido</h1>
+            <p class="text-xl md:text-2xl">Aquí podrás ver los productos disponibles para importar.</p>
         </section>
 
-        {# Sección de Productos con baldosas y paginación #}
-        <section class="products-section">
-            <h2>Productos de Tecnología de Importadores Chinos</h2>
-            <div class="product-list" id="product-list">
-                <p class="loading-message">Cargando productos...</p>
+        <!-- Sección de Productos con Carrusel/Cuadrícula Responsiva -->
+        <section class="products-section bg-white p-6 rounded-lg shadow-lg mb-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Productos de Tecnología de Importadores Chinos</h2>
+            
+            <!-- Contenedor del carrusel/cuadrícula responsiva -->
+            <div class="product-list grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="product-list">
+                <!-- Los productos se cargarán aquí dinámicamente con JavaScript -->
+                <p class="loading-message text-center col-span-full py-10 text-gray-600">Cargando productos...</p>
             </div>
+            
             <!-- Controles de Paginación -->
-            <div class="pagination-controls" id="pagination-controls">
-                <button id="prev-page" class="pagination-button" disabled>Anterior</button>
-                <div id="page-numbers" class="page-numbers">
+            <div class="pagination-controls flex justify-center items-center mt-8 space-x-4" id="pagination-controls">
+                <button id="prev-page" class="pagination-button bg-primary-purple text-white px-6 py-3 rounded-full shadow-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 font-semibold">Anterior</button>
+                <div id="page-numbers" class="page-numbers flex space-x-2">
                     <!-- Los números de página se cargarán aquí -->
                 </div>
-                <button id="next-page" class="pagination-button">Siguiente</button>
+                <button id="next-page" class="pagination-button bg-primary-purple text-white px-6 py-3 rounded-full shadow-md hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition duration-200 font-semibold">Siguiente</button>
             </div>
         </section>
     </main>
 
-    <footer>
+    <footer class="bg-gray-800 text-white text-center p-6 mt-auto">
         <p>&copy; 2025 Clear Pass. Todos los derechos reservados.</p>
     </footer>
 
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <!-- Cargar los módulos JavaScript -->
+    <script type="module" src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/products.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>
