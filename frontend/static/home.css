@@ -1,615 +1,73 @@
-/* 📌 Configuración del cuerpo de la página */
-/* Se define la fuente general y se establece la imagen de fondo con ajustes adecuados */
-body {
-    font-family: Arial, sans-serif;
+/* frontend/static/home.css */
+
+/* Estilos globales básicos y reseteos. La mayoría de los estilos para home.html ahora vienen de Tailwind CSS. */
+body, html {
     margin: 0;
     padding: 0;
-    text-align: center;
-    background-image: url("../static/images/conteiner.jpg"); /* Imagen de fondo */
-    background-size: cover; /* Ajusta la imagen para que cubra toda la pantalla */
-    background-position: center; /* Centra la imagen */
-    background-attachment: fixed; /* Mantiene la imagen fija mientras se hace scroll */
-    min-height: 100vh; /* Asegura que el body ocupe al menos toda la altura de la ventana */
-    display: flex; /* Permite usar flexbox para el layout principal */
-    flex-direction: column; /* Organiza los hijos en columna */
-    color: #333; /* Color de texto por defecto */
+    box-sizing: border-box;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-/* 📌 Estilos de la barra de navegación */
-header {
-    display: flex; /* Usa flexbox para organizar elementos */
-    justify-content: space-between; /* Distribuye elementos a los extremos */
-    padding: 20px;
-    background-color: rgba(255, 255, 255, 0.3); /* Fondo semi-transparente */
-    backdrop-filter: blur(8px); /* Agrega un efecto de desenfoque */
-    color: black; /* Color del texto */
-    position: sticky; /* Navbar pegajosa al scroll */
-    top: 0;
-    z-index: 100; /* Asegura que esté por encima de otros elementos */
-    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
-    align-items: center;
-}
-
-.logo {
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: #151047; /* Color del logo (azul oscuro) */
-    white-space: nowrap; /* Evita que el logo se rompa en varias líneas */
-}
-
-/* 📌 Ajuste de la lista de navegación */
-nav ul {
-    list-style: none; /* Elimina los estilos predeterminados de lista */
-    display: flex; /* Usa flexbox para organizar enlaces */
-    align-items: center; /* Centra verticalmente los elementos */
-    gap: 20px; /* Espacio entre elementos */
-    padding: 0;
-    margin: 0;
-    flex-wrap: wrap; /* Permite que los elementos de navegación se envuelvan */
-    justify-content: flex-end; /* Alinea los elementos a la derecha por defecto */
-    flex-grow: 1; /* Permite que la nav ocupe el espacio disponible */
-}
-
-nav ul li {
-    display: inline-block; /* Asegura que los elementos estén alineados en línea */
-    white-space: nowrap; /* Evita que el texto se rompa */
-}
-
-/* 📌 Estilos de los enlaces de navegación */
-nav ul li a,
-nav ul li span { /* Aplica también a los span (Hola, usuario) */
-    text-decoration: none; /* Elimina subrayado */
-    color: black;
-    padding: 10px;
-    border-radius: 5px; /* Bordes redondeados */
-    transition: 0.3s ease-in-out; /* Transición suave */
-    font-weight: 500;
-}
-
-/* 📌 Efecto hover en los enlaces */
-nav ul li a:hover {
-    background-color: rgba(255, 255, 255, 0.6); /* Fondo con más visibilidad */
-}
-
-/* --- Estilos para la barra de búsqueda (ajustados para el nuevo diseño) --- */
-
-.search-container {
-    /* Contenedor para alinear el formulario dentro de la navegación */
-    display: flex;
-    align-items: center;
-    flex-grow: 1; /* Permite que el contenedor de búsqueda ocupe espacio */
-    max-width: 600px; /* Ancho máximo para la barra de búsqueda */
-    margin: 0 20px; /* Espacio a los lados, ajusta según la posición en el header */
-}
-
-.search-form {
-    display: flex;
-    width: 100%;
-    gap: 15px; /* Espacio entre el input y el botón */
-}
-
-.search-box {
-    flex-grow: 1; /* El input ocupa todo el espacio disponible */
-    padding: 15px 30px; /* Aumentado el padding para hacer la barra más grande */
-    border: 1px solid #ddd; /* Borde al input */
-    outline: none; /* Quitar el borde al hacer focus */
-    font-size: 1.1rem; /* Aumentado el tamaño de la fuente */
-    border-radius: 50px; /* Bordes muy redondeados para el input */
-    background-color: #f8f8f8; /* Fondo ligeramente gris para el input */
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra al input */
-    box-sizing: border-box; /* Incluye padding y border en el ancho total */
-}
-
-.search-box::placeholder {
-    color: #999;
-}
-
-.search-button {
-    background-color: transparent; /* Fondo transparente */
-    color: #007bff; /* Color del texto/icono que combine con el diseño (azul primario) */
-    border: 1px solid #007bff; /* Borde del mismo color para un efecto visual */
-    padding: 15px 30px; /* Aumentado el padding para que coincida con la barra de búsqueda */
-    cursor: pointer;
-    font-size: 1.1rem; /* Aumentado el tamaño de la fuente */
-    border-radius: 50px; /* Bordes muy redondeados para el botón */
-    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* Sombra para el botón */
-    box-sizing: border-box; /* Incluye padding y border en el ancho total */
-}
-
-.search-button:hover {
-    background-color: #007bff; /* Fondo azul al pasar el ratón */
-    color: white; /* Texto blanco al pasar el ratón */
-    border-color: #0056b3; /* Borde azul más oscuro al pasar el ratón */
-}
-
-/* 📌 Ajuste del borde cuando está enfocado */
-.search-box:focus {
-    border-color: #635BFF; /* Cambio de color cuando el usuario interactúa */
-}
-
-/* --- Estilos para el botón de Categorías --- */
-.categories-dropdown-container {
-    position: relative; /* Para posicionar el dropdown */
-    margin-left: 20px; /* Espacio a la izquierda del botón */
-}
-
-.categories-button {
-    background-color: #007bff; /* Azul primario */
-    color: white;
-    border: none;
-    padding: 10px 15px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 1.0rem;
-    transition: background-color 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 8px; /* Espacio entre el texto y el icono */
-}
-
-.categories-button:hover {
-    background-color: #0056b3;
-}
-
-.categories-button .fas {
-    transition: transform 0.3s ease;
-}
-
-.categories-button.active .fas {
-    transform: rotate(180deg); /* Rota el icono cuando el dropdown está abierto */
-}
-
-/* Estilos del Dropdown de Categorías */
-.dropdown-content {
-    display: none; /* Oculto por defecto */
-    position: absolute;
-    background-color: #f9f9f9;
-    min-width: 200px;
-    box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-    z-index: 1; /* Asegura que esté por encima de otros elementos */
-    border-radius: 8px;
-    padding: 10px 0;
-    margin-top: 10px; /* Espacio entre el botón y el dropdown */
-    left: 0; /* Alinea con el borde izquierdo del botón */
-    max-height: 300px; /* Altura máxima para scroll */
-    overflow-y: auto;
-    text-align: left; /* Alinea el texto del dropdown a la izquierda */
-}
-
-.dropdown-content.show {
-    display: block; /* Muestra el dropdown */
-}
-
-.dropdown-content a {
-    color: black;
-    padding: 12px 16px;
-    text-decoration: none;
-    display: block;
-    font-size: 0.95rem;
-    transition: background-color 0.2s ease;
-}
-
-.dropdown-content a:hover {
-    background-color: #ddd;
-}
-
-.dropdown-content p.loading-categories {
-    text-align: center;
-    padding: 15px;
-    color: #777;
-    font-style: italic;
-}
-
-
-/* 📌 Sección Hero (mensaje principal) */
-.hero {
-    /* Eliminado margin-top fijo si el header es sticky */
-    padding: 80px 20px; /* Ajusta el padding para dar espacio */
-    min-height: 300px; /* Altura mínima para asegurar visibilidad */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start; /* Alinea el contenido a la izquierda */
-    text-align: left; /* Asegura que el texto dentro del hero esté alineado a la izquierda */
-    /* Eliminar background si la imagen de fondo es global */
-    /* background: linear-gradient(rgba(0, 123, 255, 0.6), rgba(0, 123, 255, 0.6)); */
-    color: white; /* Color del texto para contraste con el fondo */
-}
-
-/* 📌 Estilos del título principal */
-.hero h1 {
-    font-size: 2.8rem; /* Tamaño grande */
-    color: #151047; /* Color principal */
-    font-weight: bold; /* Texto en negrita */
-    /* text-align: left; */ /* Ya establecido en .hero */
-    margin: 0; /* Eliminar margen para que el padding del hero lo controle */
-}
-
-/* 📌 Estilos del texto descriptivo */
-.hero p {
-    font-size: 1.5rem;
-    color: #1c1461;
-    /* text-align: left; */ /* Ya establecido en .hero */
-    margin-top: 15px; /* Espaciado entre título y texto */
-}
-
-/* 📌 Estilos de la sección de bienvenida en productos.html */
-.welcome-section {
-    padding: 40px 20px;
-    text-align: center;
-    background-color: rgba(255, 255, 255, 0.85); /* Fondo transparente para que se vea la imagen de fondo */
-    margin: 20px auto;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    max-width: 1200px; /* Limita el ancho como en products-section */
-}
-
-.welcome-section h1 {
-    font-size: 2.8rem;
-    color: #151047;
-    margin-bottom: 10px;
-}
-
-.welcome-section p {
-    font-size: 1.3rem;
-    color: #1c1461;
-}
-
-/* --- Estilos para la sección de productos --- */
-.products-section {
-    padding: 40px 20px;
-    text-align: center;
-    background-color: rgba(255, 255, 255, 0.85); /* Fondo transparente */
-    margin: 20px auto;
-    border-radius: 10px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-    max-width: 1200px;
-    flex-grow: 1; /* Permite que ocupe el espacio disponible */
-}
-
-.products-section h2 {
-    font-size: 2.5rem;
-    color: #1c1461; /* Azul oscuro */
-    margin-bottom: 30px;
-}
-
-.product-list {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 30px;
-    justify-content: center;
-    padding: 20px 0;
-}
-
-.product-item {
-    background-color: rgba(255, 255, 255, 0.85); /* Baldosa transparente */
-    border: 1px solid #eee;
-    border-radius: 12px;
-    padding: 20px;
-    text-align: left;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-    transition: transform 0.2s ease-in-out;
-    display: flex;
-    flex-direction: column;
-    align-items: center; /* Centra el contenido verticalmente */
-}
-
-.product-item:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 6px 15px rgba(0,0,0,0.1);
-}
-
-.product-item h3 {
-    font-size: 1.5rem;
-    color: #333;
-    margin-top: 0;
-    margin-bottom: 10px;
-    text-align: center;
-    min-height: 3em; /* Asegura espacio para 2 líneas */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 2; /* Limita a 2 líneas */
-    -webkit-box-orient: vertical;
-}
-
-.product-item p {
-    font-size: 0.95rem;
-    color: #666;
-    margin-bottom: 10px;
-    text-align: center;
-    flex-grow: 1; /* Permite que la descripción ocupe espacio */
-    min-height: 4.5em; /* Ajusta la altura mínima para descripciones (aprox 3 líneas) */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-}
-
-.product-item img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-    margin-bottom: 15px;
-    object-fit: contain; /* Asegura que la imagen se ajuste sin cortarse */
-    max-height: 180px; /* Limita la altura para consistencia */
-}
-
-.product-item .product-price {
-    font-size: 1.3rem;
-    color: #007bff;
-    font-weight: bold;
-    margin-top: auto; /* Empuja el precio hacia abajo si hay espacio extra */
-    margin-bottom: 10px;
-}
-
-.product-item .view-details-button {
-    display: inline-block;
-    background-color: #28a745; /* Verde */
-    color: white;
-    padding: 10px 20px;
-    border-radius: 25px;
-    text-decoration: none;
-    font-weight: bold;
-    margin-top: 15px;
-    transition: background-color 0.3s ease;
-    width: 80%; /* Ancho del botón */
-    box-sizing: border-box; /* Incluye padding en el ancho */
-}
-
-.product-item .view-details-button:hover {
-    background-color: #218838;
-}
-
-.loading-message, .no-products-message, .error-message {
-    text-align: center;
-    grid-column: 1 / -1; /* Ocupa todas las columnas en la cuadrícula */
-    font-size: 1.2em;
-    color: #777;
-    padding: 50px;
-}
-.error-message {
-    color: red;
-}
-
-
-/* 📌 Estilos de la sección "¿Quiénes somos?" */
-.about-section {
-    /* margin-top: 100px; */ /* Eliminado porque flex-grow ya lo maneja */
-    padding: 50px;
-    background-color: rgba(255, 255, 255, 0.8); /* Fondo con transparencia */
-    border-radius: 10px; /* Bordes redondeados */
-    text-align: center;
-    flex-grow: 1; /* Permite que esta sección ocupe todo el espacio restante */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.08); /* Mantiene la sombra */
-    max-width: 1200px; /* Limita el ancho del contenido */
-    margin: 20px auto; /* Centra la sección */
-}
-
-.about-section h2 {
-    font-size: 2.5rem;
-    font-weight: bold;
-    color: #1c1461;
-    margin-bottom: 20px;
-}
-
-.about-section p {
-    font-size: 1.3rem;
-    color: #333;
-    max-width: 800px; /* Limita el ancho para mejorar la legibilidad */
-    margin: 20px auto; /* Centra el texto */
-    line-height: 1.6; /* Espaciado entre líneas */
-}
-
-/* --- Footer --- */
-footer {
-    background-color: rgba(0, 0, 0, 0.7); /* Fondo oscuro transparente */
-    color: white;
-    text-align: center;
-    padding: 20px;
-    font-size: 0.9rem;
-    margin-top: auto; /* Empuja el footer hacia abajo */
-}
-
-/* --- Estilos de Paginación --- */
-.pagination-controls {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-top: 30px;
-    gap: 15px;
-    padding: 15px;
-    background-color: rgba(255, 255, 255, 0.85); /* Fondo transparente */
-    border-radius: 10px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-}
-
-.pagination-button {
-    background-color: #007bff;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 25px;
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease;
-}
-
-.pagination-button:hover:not(:disabled) {
-    background-color: #0056b3;
-}
-
-.pagination-button:disabled {
-    background-color: #cccccc;
-    cursor: not-allowed;
-}
-
-.page-numbers {
-    display: flex;
-    gap: 8px;
-}
-
-.page-number-button {
-    background-color: #f0f0f0;
-    color: #333;
-    border: 1px solid #ddd;
-    padding: 8px 15px;
-    border-radius: 50%; /* Botones circulares */
-    cursor: pointer;
-    font-size: 1rem;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
-    min-width: 40px; /* Ancho mínimo para mantener el círculo */
-    height: 40px; /* Altura mínima para mantener el círculo */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: 500;
-}
-
-.page-number-button:hover:not(.active) {
-    background-color: #e0e0e0;
-    border-color: #bbb;
-}
-
-.page-number-button.active {
-    background-color: #007bff;
-    color: white;
-    border-color: #007bff;
-    cursor: default;
-    font-weight: bold;
-}
-
-/* --- Media Queries para Responsividad --- */
-@media (max-width: 768px) {
-    header {
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 15px;
+/* Estilos para el menú hamburguesa en móvil. */
+@media (max-width: 767px) {
+    header nav {
+        border-radius: 0 0 0.75rem 0.75rem;
+        position: absolute;
+        top: 6rem; /* Ajustar según la altura real de tu header */
+        left: 0;
+        width: 100%;
+        background-color: white; /* El menú desplegado en móvil tendrá fondo blanco */
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        padding-bottom: 1rem;
     }
 
-    nav ul {
+    header nav.active {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    header nav ul {
         flex-direction: column;
         width: 100%;
-        align-items: flex-start;
-        margin-top: 15px;
-        justify-content: flex-start; /* Alinea los elementos apilados a la izquierda */
+        text-align: center;
     }
 
-    nav ul li {
-        margin: 8px 0;
+    header nav ul li {
         width: 100%;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
     }
 
-    .search-container {
+    header nav ul li:last-child {
+        border-bottom: none;
+    }
+
+    header nav ul li a,
+    header nav ul li span,
+    header nav ul li .nav-button {
+        display: block;
+        padding: 0.5rem 0;
         width: 100%;
-        margin: 15px 0 0 0; /* Sin margen lateral */
-        max-width: none;
+        color: #4a5568; /* color de texto por defecto para los elementos del menú desplegado */
+    }
+    
+    /* Asegurar que los colores en el menú desplegado sean legibles */
+    header nav ul li a.bg-primary-purple { /* Estilo del botón "Registrarse" en menú móvil */
+        color: white; 
     }
 
+    /* Ajustes específicos para el formulario de búsqueda en móvil */
     .search-form {
-        flex-direction: column; /* Apila input y botón */
-        gap: 10px;
+        width: 90%;
+        margin: 0.5rem auto;
+        background-color: #f7fafc; /* Fondo para barra de búsqueda en menú móvil */
     }
-
-    .search-box,
-    .search-button {
-        width: 100%; /* Ocupa todo el ancho disponible */
-        font-size: 1rem;
-        padding: 12px 20px;
+    .search-form input {
+        color: #2d3748; /* Color de texto para input en menú móvil */
     }
-
-    .categories-dropdown-container {
-        margin-left: 0;
-        width: 100%;
-    }
-
-    .categories-button {
-        width: 100%;
-        justify-content: center;
-    }
-
-    .dropdown-content {
-        position: static; /* Cambia a estático para que fluya con el contenido */
-        width: 100%; /* Ocupa todo el ancho */
-        margin-top: 10px;
-        box-shadow: none; /* Sin sombra para mejor integración */
-        border-radius: 0;
-        border-top: 1px solid #eee; /* Borde superior para separarlo visualmente */
-    }
-
-    .hero h1 {
-        font-size: 2.5rem;
-    }
-
-    .hero p {
-        font-size: 1rem;
-    }
-
-    .products-section,
-    .welcome-section,
-    .about-section {
-        padding: 30px 15px;
-        margin: 15px auto; /* Reduce el margen en móviles */
-    }
-
-    .product-list {
-        grid-template-columns: 1fr;
-    }
-
-    .pagination-controls {
-        flex-direction: column;
-        gap: 10px;
-        padding: 10px;
-    }
-}
-
-@media (max-width: 480px) {
-    .logo {
-        font-size: 1.5rem;
-    }
-
-    .search-box,
-    .search-button {
-        font-size: 0.9rem;
-        padding: 8px 15px;
-    }
-
-    .hero h1 {
-        font-size: 2rem;
-    }
-
-    .hero p {
-        font-size: 0.9rem;
-    }
-
-    .about-section h2 {
-        font-size: 2rem;
-    }
-
-    .about-section p {
-        font-size: 1rem;
-    }
-
-    .product-item {
-        padding: 15px;
-    }
-
-    .product-item h3 {
-        font-size: 1.3rem;
-    }
-
-    .product-item .product-price {
-        font-size: 1.1rem;
-    }
-
-    .product-item .view-details-button {
-        padding: 8px 15px;
-        font-size: 0.9rem;
+    .search-form button {
+        color: #a0aec0; /* Color de botón para búsqueda en menú móvil */
     }
 }

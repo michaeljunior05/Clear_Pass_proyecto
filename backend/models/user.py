@@ -14,6 +14,9 @@ class User:
         self._created_at = datetime.now().isoformat()
         self._updated_at = datetime.now().isoformat()
 
+
+
+
     @property
     def id(self):
         return self._id
@@ -100,3 +103,5 @@ class User:
 
     def __repr__(self):
         return f"<User(id='{self.id}', email='{self.email}', name='{self.name}', google_id='{self.google_id}')>"
+
+

@@ -6,72 +6,111 @@
  * y cohesión para la gestión de la interfaz de usuario.
  */
 
-document.addEventListener('DOMContentLoaded', () => {
+// --- FUNCIONES GLOBALES (ACCESIBLES DESDE CUALQUIER PARTE DEL SCRIPT) ---
 
-    // --- Función de Utilidad: Mostrar Mensajes al Usuario ---
-    /**
-     * Muestra un mensaje temporal al usuario en la parte superior de la pantalla.
-     * @param {string} message - El texto del mensaje a mostrar.
-     * @param {'info' | 'success' | 'error'} type - El tipo de mensaje para aplicar estilos (info, success, error).
-     * @param {number} duration - Duración en milisegundos que el mensaje estará visible (por defecto 3000ms).
-     */
-    function showMessage(message, type = 'info', duration = 3000) {
-        let messageContainer = document.getElementById('app-message-container');
-        if (!messageContainer) {
-            messageContainer = document.createElement('div');
-            messageContainer.id = 'app-message-container';
-            Object.assign(messageContainer.style, {
-                position: 'fixed',
-                top: '20px',
-                left: '50%',
-                transform: 'translateX(-50%)',
-                padding: '15px 25px',
-                borderRadius: '8px',
-                zIndex: '1000',
-                textAlign: 'center',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-                fontSize: '16px',
-                color: '#fff',
-                opacity: '0',
-                transition: 'opacity 0.3s ease-in-out',
-                fontFamily: 'Inter, sans-serif'
-            });
-            document.body.appendChild(messageContainer);
-        }
-
-        messageContainer.innerHTML = '';
-        messageContainer.style.opacity = '0'; // Ocultar para resetear la transición
-
-        if (type === 'success') {
-            messageContainer.style.backgroundColor = '#4CAF50'; // Verde
-        } else if (type === 'error') {
-            messageContainer.style.backgroundColor = '#f44336'; // Rojo
-        } else {
-            messageContainer.style.backgroundColor = '#2196F3'; // Azul (info)
-        }
-
-        messageContainer.textContent = message;
-        // Pequeño retardo para asegurar que la transición de opacidad funcione al reaparecer
-        setTimeout(() => {
-            messageContainer.style.opacity = '1';
-        }, 50);
-
-        setTimeout(() => {
-            messageContainer.style.opacity = '0';
-            setTimeout(() => {
-                if (messageContainer.parentNode) {
-                    messageContainer.parentNode.removeChild(messageContainer);
-                }
-            }, 300); // Debe coincidir con la duración de la transición de opacidad a 0
-        }, duration);
+/**
+ * Muestra un mensaje temporal al usuario en la parte superior de la pantalla.
+ * @param {string} message - El texto del mensaje a mostrar.
+ * @param {'info' | 'success' | 'error'} type - El tipo de mensaje para aplicar estilos (info, success, error).
+ * @param {number} duration - Duración en milisegundos que el mensaje estará visible (por defecto 3000ms).
+ */
+function showMessage(message, type = 'info', duration = 3000) {
+    let messageContainer = document.getElementById('app-message-container');
+    if (!messageContainer) {
+        messageContainer = document.createElement('div');
+        messageContainer.id = 'app-message-container';
+        Object.assign(messageContainer.style, {
+            position: 'fixed',
+            top: '20px',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            padding: '15px 25px',
+            borderRadius: '8px',
+            zIndex: '1000',
+            textAlign: 'center',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            fontSize: '16px',
+            color: '#fff',
+            opacity: '0',
+            transition: 'opacity 0.3s ease-in-out',
+            fontFamily: 'Inter, sans-serif'
+        });
+        document.body.appendChild(messageContainer);
     }
 
-    // --- Lógica de Autenticación (Login y Registro) ---
+    messageContainer.innerHTML = '';
+    messageContainer.style.opacity = '0'; // Ocultar para resetear la transición
+
+    if (type === 'success') {
+        messageContainer.style.backgroundColor = '#4CAF50'; // Verde
+    } else if (type === 'error') {
+        messageContainer.style.backgroundColor = '#f44336'; // Rojo
+    } else {
+        messageContainer.style.backgroundColor = '#2196F3'; // Azul (info)
+    }
+
+    messageContainer.textContent = message;
+    // Pequeño retardo para asegurar que la transición de opacidad funcione al reaparecer
+    setTimeout(() => {
+        messageContainer.style.opacity = '1';
+    }, 50);
+
+    setTimeout(() => {
+        messageContainer.style.opacity = '0';
+        setTimeout(() => {
+            if (messageContainer.parentNode) {
+                messageContainer.parentNode.removeChild(messageContainer);
+            }
+        }, 300); // Debe coincidir con la duración de la transición de opacidad a 0
+    }, duration);
+}
+
+/**
+ * Función para manejar la respuesta del código de autorización de Google.
+ * Esta función es un callback invocado por la librería GSI.
+ * @param {Object} response - Objeto de respuesta de Google que contiene el código de autorización.
+ */
+async function handleGoogleAuthCode(response) {
+    console.log("Respuesta de Google Auth Code recibida:", response);
+    const code = response.code;
+
+    if (code) {
+        console.log("Enviando código de Google a /api/auth/google/callback...");
+        try {
+            const fetchResponse = await fetch('/api/auth/google/callback', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: new URLSearchParams({ code }),
+            });
+            const data = await fetchResponse.json();
+
+            if (fetchResponse.ok) {
+                showMessage('Inicio de sesión con Google exitoso. Redirigiendo...', 'success');
+                console.log('Inicio de sesión con Google exitoso (backend response):', data);
+                window.location.href = '/productos'; 
+            } else {
+                showMessage(data.message || 'Error al iniciar sesión con Google', 'error');
+                console.error('Error en el inicio de sesión con Google (backend error):', data);
+            }
+        } catch (error) {
+            console.error('Error de red al intentar enviar el código de Google al backend:', error);
+            showMessage('Error de red al intentar iniciar sesión con Google', 'error');
+        }
+    } else {
+        console.error("No se recibió el código de autorización de Google. Respuesta:", response);
+        showMessage('Error al iniciar sesión con Google: No se obtuvo el código de autorización.', 'error');
+    }
+}
+
+
+// --- LISTENERS DE EVENTOS PRINCIPALES ---
+
+document.addEventListener('DOMContentLoaded', async () => { 
+
+    // --- Lógica de Autenticación (Login y Registro) para formularios normales ---
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
-    const googleSignInButton = document.getElementById('googleSignIn');
-    // Asegúrate de que este Client ID es correcto para tu configuración de Google
-    const googleClientId = '222270840199-pcntooj9dsvmsn79j11glth1fueaurij.apps.googleusercontent.com'; 
+
 
     if (loginForm) {
         loginForm.addEventListener('submit', async (event) => {
@@ -92,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (response.ok) {
                     showMessage('Inicio de sesión exitoso. Redirigiendo...', 'success');
                     console.log('Inicio de sesión exitoso:', data);
-                    window.location.href = '/productos'; // Redirige a la página de productos
+                    window.location.href = '/productos'; 
                 } else {
                     showMessage(data.message || 'Error al iniciar sesión', 'error');
                     console.error('Error en el inicio de sesión:', data);
@@ -128,10 +167,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 const data = await response.json();
 
                 if (response.ok) {
+                    // MODIFICADO AQUÍ: Mostrar mensaje y redirigir
                     showMessage(data.message || 'Registro exitoso. Redirigiendo para iniciar sesión.', 'success');
                     console.log('Registro exitoso:', data);
-                    // REDIRECCIÓN INMEDIATA A LA PÁGINA DE INICIO DE SESIÓN
-                    window.location.href = '/login'; 
+                    // Redirigir a la página de login después de un breve retraso
+                    setTimeout(() => {
+                        window.location.href = '/login'; 
+                    }, 1500); // Dar tiempo al usuario para ver el mensaje
                 } else {
                     showMessage(data.message || 'Error al registrarse', 'error');
                     console.error('Error al registrarse:', data);
@@ -143,87 +185,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Lógica de Google Sign-In
-    if (googleSignInButton) {
-        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-            const client = google.accounts.oauth2.initCodeClient({
-                client_id: googleClientId,
-                scope: 'openid email profile',
-                // ¡IMPORTANTE! Esta URL debe coincidir con la URL de tu Blueprint en Flask
-                redirect_uri: 'http://127.0.0.1:5000/api/auth/google/callback', 
-            });
-            googleSignInButton.addEventListener('click', () => {
-                client.requestCode();
-            });
-        } else {
-            console.warn("Google API client no cargado. El botón de inicio de sesión de Google podría no funcionar.");
-        }
-    }
-
-    // Manejo del callback de Google al cargar la ventana
-    window.addEventListener('load', async () => {
-        const urlParams = new URLSearchParams(window.location.search);
-        const code = urlParams.get('code');
-
-        if (code) {
-            console.log("Código de Google detectado en la URL. Procesando callback...");
-            try {
-                const response = await fetch('/api/auth/google/callback', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ code }),
-                });
-                const data = await response.json();
-
-                if (response.ok) {
-                    showMessage('Inicio de sesión con Google exitoso. Redirigiendo...', 'success');
-                    console.log('Inicio de sesión con Google exitoso:', data);
-                    window.location.href = '/productos'; // Redirige a la página de productos
-                } else {
-                    showMessage(data.message || 'Error al iniciar sesión con Google', 'error');
-                    console.error('Error en el inicio de sesión con Google:', data);
-                }
-            } catch (error) {
-                console.error('Error de red al intentar iniciar sesión con Google:', error);
-                showMessage('Error de red al intentar iniciar sesión con Google', 'error');
-            }
-            // Eliminar el código de la URL para evitar re-procesamiento y limpiar la URL
-            urlParams.delete('code');
-            const newUrl = `${window.location.pathname}${urlParams.toString() ? '?' + urlParams.toString() : ''}`;
-            window.history.replaceState({}, document.title, newUrl);
-        }
-    });
-
-    // --- Lógica Específica para la Página de Productos (`/productos`) ---
-    // Esto se ejecuta solo si el pathname es '/productos' o '/product/...'
+    // --- Lógica Específica para la Página de Productos (`/productos`) y detalles (`/product/`) ---
     if (window.location.pathname === '/productos' || window.location.pathname.startsWith('/product/')) {
         const searchForm = document.querySelector('.search-form');
         const searchInput = document.getElementById('search-input');
-        const productList = document.getElementById('product-list'); // Usamos ID para ser más específicos
+        const productList = document.getElementById('product-list'); 
         const paginationControls = document.getElementById('pagination-controls');
         const prevPageButton = document.getElementById('prev-page');
         const nextPageButton = document.getElementById('next-page');
         const pageNumbersContainer = document.getElementById('page-numbers');
         const categoriesButton = document.getElementById('categories-button');
         const categoriesDropdown = document.getElementById('categories-dropdown');
-        const productDetailContainer = document.querySelector('.product-detail-container'); // Para product_detail.html
+        const productDetailContainer = document.querySelector('.product-detail-container'); 
 
         let currentPage = 1;
         const productsPerPage = 10;
         let totalPages = 1;
         let currentSearchTerm = '';
-        let currentCategory = ''; // Para almacenar la categoría activa
+        let currentCategory = ''; 
 
-        /**
-         * Carga y muestra los productos desde la API, con soporte para búsqueda, filtrado y paginación.
-         * Se ejecuta en la página `/productos`.
-         * @param {string} searchTerm - Término de búsqueda.
-         * @param {string} category - Categoría para filtrar.
-         * @param {number} page - Número de página actual.
-         * @param {number} limit - Cantidad de productos por página.
-         */
         async function loadProducts(searchTerm = '', category = '', page = 1, limit = productsPerPage) {
-            if (!productList) { // Asegura que el elemento exista en la página actual
+            if (!productList) { 
                 console.warn("Elemento 'product-list' no encontrado. Esto no es la página /productos.");
                 return;
             }
@@ -251,17 +233,16 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error(`HTTP error! status: ${response.status} - ${errorData.message || 'Error al obtener productos'}`);
                 }
 
-                const responseData = await response.json(); // Ahora esperamos un objeto con 'products' y 'total_pages'
+                const responseData = await response.json(); 
                 const productsData = responseData.products;
                 totalPages = responseData.total_pages;
 
-                productList.innerHTML = ''; // Limpiar mensaje de carga
+                productList.innerHTML = ''; 
 
                 if (productsData && productsData.length > 0) {
                     productsData.forEach(product => {
                         const productItem = document.createElement('div');
                         productItem.classList.add('product-item');
-                        // Atributo de datos para el ID del producto, útil para el detalle
                         productItem.dataset.productId = product.id; 
 
                         productItem.innerHTML = `
@@ -274,7 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
                         `;
                         productList.appendChild(productItem);
                     });
-                    // Añadir event listeners para los botones de detalle después de que los productos se carguen
                     document.querySelectorAll('.view-details-button').forEach(button => {
                         button.addEventListener('click', (e) => {
                             const productId = e.target.dataset.productId;
@@ -286,33 +266,27 @@ document.addEventListener('DOMContentLoaded', () => {
                 } else {
                     productList.innerHTML = '<p class="no-products-message">No se encontraron productos que coincidan con tu búsqueda o filtros.</p>';
                 }
-                updatePaginationControls(); // Actualizar los controles de paginación
+                updatePaginationControls(); 
             } catch (error) {
                 console.error('Error al cargar productos:', error);
                 productList.innerHTML = `<p class="error-message">Error al cargar productos: ${error.message}. Por favor, inténtalo de nuevo.</p>`;
             }
         }
 
-        /**
-         * Actualiza el estado y la visibilidad de los botones de paginación.
-         * Se ejecuta en la página `/productos`.
-         */
         function updatePaginationControls() {
             if (!paginationControls) return;
 
             prevPageButton.disabled = currentPage === 1;
-            nextPageButton.disabled = currentPage === totalPages || totalPages === 0; // También deshabilitar si no hay páginas
+            nextPageButton.disabled = currentPage === totalPages || totalPages === 0; 
 
             pageNumbersContainer.innerHTML = '';
-            const maxPageButtons = 5; // Número máximo de botones de página a mostrar
+            const maxPageButtons = 5; 
             let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
             let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
 
-            // Ajustar si la ventana de páginas es demasiado pequeña al final
             if (endPage - startPage + 1 < maxPageButtons) {
                 startPage = Math.max(1, endPage - maxPageButtons + 1);
             }
-            // Asegurarse de que al menos un botón de página se muestre si hay páginas
             if (totalPages > 0 && startPage === 0) startPage = 1;
 
 
@@ -325,7 +299,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 pageButton.addEventListener('click', () => {
                     loadProducts(currentSearchTerm, currentCategory, i, productsPerPage);
-                    // Actualiza la URL para reflejar la página
                     const newUrl = new URL(window.location.href);
                     newUrl.searchParams.set('page', i);
                     window.history.pushState({ path: newUrl.href }, '', newUrl.href);
@@ -334,7 +307,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Event Listeners para Paginación (solo si estamos en /productos)
         if (prevPageButton) {
             prevPageButton.addEventListener('click', () => {
                 if (currentPage > 1) {
@@ -351,49 +323,39 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Manejar el envío del formulario de búsqueda (solo en productos.html)
-        if (searchForm) { // searchForm existe solo en productos.html
+        if (searchForm) { 
             searchForm.addEventListener('submit', function(event) {
                 event.preventDefault();
                 const searchTerm = searchInput.value;
-                
-                // Cargar/filtrar productos (siempre en la página de productos)
-                loadProducts(searchTerm, '', 1, productsPerPage); // Reiniciar a la primera página y sin categoría
-                // Actualiza la URL para reflejar la búsqueda
+                loadProducts(searchTerm, '', 1, productsPerPage); 
                 const newUrl = new URL(window.location.href);
                 newUrl.searchParams.set('query', searchTerm);
-                newUrl.searchParams.delete('category'); // Limpiar categoría al buscar
+                newUrl.searchParams.delete('category'); 
                 newUrl.searchParams.set('page', '1');
                 window.history.pushState({ path: newUrl.href }, '', newUrl.href);
             });
         }
 
-        // Lógica para el botón de Categorías (solo en productos.html)
-        if (categoriesButton) { // categoriesButton existe solo en productos.html
-            loadCategories(); // Cargar categorías al inicio
+        if (categoriesButton) { 
+            loadCategories(); 
 
             categoriesButton.addEventListener('click', (event) => {
-                event.stopPropagation(); // Evita que el clic se propague al documento
+                event.stopPropagation(); 
                 categoriesDropdown.classList.toggle('show');
-                categoriesButton.classList.toggle('active'); // Para rotar el icono
+                categoriesButton.classList.toggle('active'); 
             });
 
-            // Cerrar el dropdown si se hace clic fuera de él
             document.addEventListener('click', (event) => {
                 if (categoriesDropdown && categoriesDropdown.classList.contains('show') && !categoriesDropdown.contains(event.target) && event.target !== categoriesButton && !categoriesButton.contains(event.target)) {
                     categoriesDropdown.classList.remove('show');
-                    categoriesButton.classList.remove('active'); // Restaurar icono
+                    categoriesButton.classList.remove('active'); 
                 }
             });
         }
 
-        /**
-         * Fetches and displays product categories in the dropdown.
-         * Se ejecuta en la página `/productos`.
-         */
         async function loadCategories() {
             if (!categoriesDropdown) return;
-            categoriesDropdown.innerHTML = '<p class="loading-categories">Cargando categorías...</p>'; // Mensaje de carga
+            categoriesDropdown.innerHTML = '<p class="loading-categories">Cargando categorías...</p>'; 
 
             try {
                 const response = await fetch('/api/products/categories');
@@ -402,19 +364,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const categories = await response.json();
 
-                categoriesDropdown.innerHTML = ''; // Limpiar mensaje de carga
+                categoriesDropdown.innerHTML = ''; 
 
                 if (categories && categories.length > 0) {
-                    // Añadir opción "Todas las categorías"
                     const allCategoriesLink = document.createElement('a');
                     allCategoriesLink.href = '#';
                     allCategoriesLink.textContent = 'Todas las categorías';
                     allCategoriesLink.addEventListener('click', (e) => {
                         e.preventDefault();
-                        loadProducts(currentSearchTerm, '', 1, productsPerPage); // Cargar sin filtro de categoría
+                        loadProducts(currentSearchTerm, '', 1, productsPerPage); 
                         categoriesDropdown.classList.remove('show');
-                        categoriesButton.classList.remove('active'); // Restaurar icono
-                        // Actualiza la URL
+                        categoriesButton.classList.remove('active'); 
                         const newUrl = new URL(window.location.href);
                         newUrl.searchParams.delete('category');
                         newUrl.searchParams.set('page', '1');
@@ -425,18 +385,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     categories.forEach(category => {
                         const categoryLink = document.createElement('a');
-                        categoryLink.href = `#`; // Usaremos JS para el filtrado, no una URL de navegación
-                        categoryLink.textContent = category.charAt(0).toUpperCase() + category.slice(1); // Capitalizar
+                        categoryLink.href = `#`; 
+                        categoryLink.textContent = category.charAt(0).toUpperCase() + category.slice(1); 
                         categoryLink.addEventListener('click', (e) => {
                             e.preventDefault();
-                            loadProducts('', category, 1, productsPerPage); // Buscar por categoría, resetear búsqueda y página
-                            if (searchInput) searchInput.value = ''; // Limpiar la barra de búsqueda al seleccionar categoría
-                            categoriesDropdown.classList.remove('show'); // Cerrar dropdown
-                            categoriesButton.classList.remove('active'); // Restaurar icono
-                            // Actualiza la URL para reflejar el filtro de categoría
+                            loadProducts('', category, 1, productsPerPage); 
+                            if (searchInput) searchInput.value = ''; 
+                            categoriesDropdown.classList.remove('show'); 
+                            categoriesButton.classList.remove('active'); 
                             const newUrl = new URL(window.location.href);
                             newUrl.searchParams.set('category', category);
-                            newUrl.searchParams.delete('query'); // Limpiar query al filtrar por categoría
+                            newUrl.searchParams.delete('query'); 
                             newUrl.searchParams.set('page', '1');
                             window.history.pushState({ path: newUrl.href }, '', newUrl.href);
                         });
@@ -452,13 +411,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
 
-        // --- Lógica de carga inicial para product_detail.html ---
-        // Esto se ejecutará si la URL empieza con /product/
         if (window.location.pathname.startsWith('/product/')) {
-            const productId = window.location.pathname.split('/').pop(); // Extrae el ID del último segmento de la URL
+            const productId = window.location.pathname.split('/').pop(); 
             console.log(`Cargando detalles para el producto ID: ${productId}`);
             
-            if (productDetailContainer) { // Asegúrate de que el contenedor exista
+            if (productDetailContainer) { 
                 productDetailContainer.innerHTML = '<p>Cargando detalles del producto...</p>';
             }
 
@@ -478,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     if (productDetailContainer) {
                         productDetailContainer.innerHTML = `
-                            <img src="${product.image_url}" alt="${product.name}" class="product-detail-image"
+                            <img src="${product.image_url}" alt="${product.name}" class="product-image"
                                  onerror="this.onerror=null;this.src='https://placehold.co/400x400/cccccc/333333?text=No+Image';">
                             <div class="product-detail-info">
                                 <h1 class="product-detail-title">${product.name}</h1>
@@ -492,7 +449,6 @@ document.addEventListener('DOMContentLoaded', () => {
                                 <button class="add-to-cart-detail-button">Añadir al Carrito</button>
                             </div>
                         `;
-                        // Añadir evento para el botón "Añadir al Carrito" (implementación futura)
                         const addToCartButton = productDetailContainer.querySelector('.add-to-cart-detail-button');
                         if (addToCartButton) {
                             addToCartButton.addEventListener('click', () => {
@@ -510,17 +466,45 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Carga inicial de productos para /productos
         if (window.location.pathname === '/productos' && productList) {
             const urlParams = new URLSearchParams(window.location.search);
             const initialSearchQuery = urlParams.get('query') || '';
             const initialCategory = urlParams.get('category') || '';
             const initialPage = parseInt(urlParams.get('page')) || 1;
 
-            if (searchInput) searchInput.value = initialSearchQuery; // Rellena la barra de búsqueda si hay un query en la URL
+            if (searchInput) searchInput.value = initialSearchQuery; 
             
-            // Cargar los productos con los parámetros iniciales de la URL
             loadProducts(initialSearchQuery, initialCategory, initialPage, productsPerPage);
+        }
+    }
+});
+
+// AÑADIDO: Listener para window.onload para la inicialización del botón de Google
+window.addEventListener('load', () => {
+    // Asegúrate de que el ID del botón es 'googleSignIn' en tu HTML
+    const googleSignInButton = document.getElementById('googleSignIn'); 
+    const googleClientId = '967793497246-m78gm3m77u9ebqgpev7h10op0lbpqepg.apps.googleusercontent.com'; 
+
+    if (googleSignInButton) {
+        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+            const client = google.accounts.oauth2.initCodeClient({
+                client_id: googleClientId,
+                scope: 'openid email profile',
+                redirect_uri: 'https://127.0.0.1:5000/api/auth/google/callback', // AHORA ES HTTPS
+                ux_mode: 'popup', 
+                callback: handleGoogleAuthCode 
+                // Elimina o comenta si existe: auto_select: true,
+            });
+
+            // Mover client.requestCode() DENTRO del listener de clic del botón
+            googleSignInButton.addEventListener('click', () => {
+                console.log("Botón de Google clickeado. Solicitando código...");
+                client.requestCode({
+                    redirect_uri: 'https://127.0.0.1:5000/api/auth/google/callback' // Asegurar que es HTTPS
+                });
+            });
+        } else {
+            console.warn("Google API client no cargado. El botón de inicio de sesión de Google podría no funcionar.");
         }
     }
 });

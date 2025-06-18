@@ -1,6 +1,8 @@
 # app.py
+import os 
+os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' # ¡MANTENER ESTA LÍNEA POR AHORA! Aunque usemos HTTPS, a veces oauthlib puede ser caprichosa.
+
 from flask import Flask, render_template, url_for, session, redirect, jsonify, request 
-import os
 from flask_session import Session
 import logging
 from datetime import timedelta
@@ -28,11 +30,6 @@ from backend.routes.auth_routes import auth_bp, init_auth_routes
 from backend.routes.product_routes import product_bp, init_product_routes
 
 def create_app():
-    """
-    Función de fábrica de aplicaciones para Flask.
-    Configura la aplicación, inicializa las dependencias
-    y registra los Blueprints.
-    """
     app = Flask(
         __name__,
         static_folder=os.path.join('frontend', 'static'),
@@ -46,7 +43,8 @@ def create_app():
     app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
     Session(app)
 
-    CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173"]) 
+    # AÑADIR HTTPS A ORIGINS EN CORS
+    CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://127.0.0.1:5000"]) 
 
     # --- Inicialización de Repositorios y Controladores (Inyección de Dependencias) ---
 
@@ -58,10 +56,7 @@ def create_app():
 
     user_repository = UserRepository(storage=json_storage)
     
-    # IMPORTANTE: La inyección de dependencias ahora es directa, sin circularidad
-    # Primero se inicializa ProductRepository (que no depende de ProductController)
     product_repository = ProductRepository(external_product_service=external_product_service)
-    # Luego se inicializa ProductController, pasándole el ProductRepository
     product_controller = ProductController(product_repository=product_repository)
     
     auth_controller = AuthController(user_repository=user_repository, config=Config)
@@ -70,12 +65,10 @@ def create_app():
 
     # --- Registro de Blueprints y Inyección de Controladores ---
 
-    # Rutas de productos (API)
     init_product_routes(product_controller)
     app.register_blueprint(product_bp) 
     logger.info("Blueprint 'product_bp' registrado con prefijo '/api'.")
     
-    # Rutas de autenticación (API)
     init_auth_routes(auth_controller)
     app.register_blueprint(auth_bp, url_prefix= '/api') 
     logger.info("Blueprint 'auth_bp' registrado con prefijo '/api'.")
@@ -134,5 +127,7 @@ def create_app():
 
 # Bloque de ejecución principal
 if __name__ == '__main__':
+    # Configuración de HTTPS para el servidor de desarrollo
     app = create_app()
-    app.run(debug=True)
+    app.run(debug=True, ssl_context=('cert.pem', 'key.pem')) 
+
