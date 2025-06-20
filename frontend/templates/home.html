@@ -36,51 +36,53 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
 </head>
 <body class="font-sans bg-gray-bg min-h-screen flex flex-col" 
-      style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-attachment: fixed; background-size: cover; background-position: center;"> {# FONDO PRINCIPAL EN EL BODY, FIJO Y CUBRIENDO TODA LA PANTALLA #}
+      style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-attachment: fixed; background-size: cover; background-position: center;">
 
-    <header class="bg-transparent p-4 md:px-8 flex items-center justify-between flex-wrap z-50 absolute w-full top-0 left-0"> {# Transparente, sin sombra, encima de todo #}
-        <!-- Logo (responsivo: solo imagen en móvil, texto y imagen en escritorio) -->
+    <header class="bg-transparent p-4 md:px-8 flex items-center justify-between flex-wrap z-50 absolute w-full top-0 left-0">
+        <!-- Logo -->
         <div class="flex items-center cursor-pointer" onclick="window.location.href='{{ url_for('index') }}'">
-            <img src="{{ url_for('static', filename='images/clear_logo.png') }}" alt="Clear Pass Logo" class="h-20 w-auto"> {# Tamaño del logo h-20 #}
+            <img src="{{ url_for('static', filename='images/clear_logo.png') }}" class="h-20 w-auto">
         </div>
 
         <!-- Botón de menú hamburguesa para móviles -->
-        <button id="menu-button" class="md:hidden text-black focus:outline-none focus:ring-2 focus:ring-primary-purple p-2 rounded-md"> {# Color del icono del botón en negro #}
+        {# AÑADIR z-index a 50 (z-50) para asegurar que esté encima de todo #}
+        <button id="menu-button" class="md:hidden text-black focus:outline-none focus:ring-2 focus:ring-primary-purple p-2 rounded-md relative z-50"> 
             <i class="fas fa-bars text-2xl"></i>
         </button>
 
         <!-- Navegación principal (oculta en móvil por defecto, visible en md y superior) -->
+        {# AÑADIR z-index a 40 (z-40) para que esté debajo del botón pero encima de otros elementos #}
         <nav id="main-nav" class="hidden md:flex flex-col md:flex-row md:items-center w-full md:w-auto mt-4 md:mt-0 space-y-2 md:space-y-0 md:space-x-6 text-lg 
-                                bg-white shadow-lg rounded-lg p-4 
-                                md:bg-transparent md:shadow-none md:rounded-none md:p-0"> {# Fondo blanco en móvil, transparente en escritorio #}
+                                 bg-white shadow-lg rounded-lg p-4 
+                                 md:bg-transparent md:shadow-none md:rounded-none md:p-0 absolute top-full left-0 md:relative md:top-auto z-40"> {# top-full para que aparezca debajo del header #}
             <ul class="flex flex-col md:flex-row space-y-2 md:space-y-0 md:space-x-6 w-full md:w-auto items-center">
-                <li class="w-full py-2 md:w-auto md:py-0"><a href="{{ url_for('productos_page') }}" class="block text-black hover:text-primary-purple transition duration-200 font-semibold text-center md:text-left">Productos</a></li> {# Texto negro #}
+                <li class="w-full py-2 md:w-auto md:py-0"><a href="{{ url_for('productos_page') }}" class="block text-black hover:text-primary-purple transition duration-200 font-semibold text-center md:text-left">Productos</a></li>
                 
                 <!-- Barra de búsqueda -->
                 <li class="w-full py-2 md:w-auto md:py-0">
-                    <form class="search-form flex items-center bg-white bg-opacity-20 md:bg-white rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary-purple transition duration-200"> {# Fondo semi-transparente para la barra en escritorio, blanco en móvil #}
-                        <input type="text" name="search" id="search-input" class="search-box bg-transparent outline-none w-full text-black placeholder-gray-500" placeholder="Buscar producto, importador..."> {# texto negro, placeholder gris #}
-                        <button type="submit" class="text-black hover:text-primary-purple transition duration-200 ml-2"> {# icono negro #}
-                            <img src="{{ url_for('static', filename='images/Lupa_transparente.png') }}" alt="Buscar" class="h-5 w-5"> {# La lupa sin filter invert #}
+                    <form class="search-form flex items-center bg-white bg-opacity-20 md:bg-white rounded-full px-4 py-2 shadow-sm focus-within:ring-2 focus-within:ring-primary-purple transition duration-200">
+                        <input type="text" name="search" id="search-input" class="search-box bg-transparent outline-none w-full text-black placeholder-gray-500" placeholder="Buscar producto, importador...">
+                        <button type="submit" class="text-black hover:text-primary-purple transition duration-200 ml-2">
+                            <img src="{{ url_for('static', filename='images/Lupa_transparente.png') }}" alt="Buscar" class="h-5 w-5">
                         </button>
                     </form>
                 </li>
 
                 <!-- ¿Quiénes somos? -->
-                <li class="w-full py-2 md:w-auto md:py-0"><a href="/#quienes-somos" class="block text-black hover:text-primary-purple transition duration-200 font-semibold text-center md:text-left">¿Quiénes somos?</a></li> {# Texto negro #}
+                <li class="w-full py-2 md:w-auto md:py-0"><a href="/#quienes-somos" class="block text-black hover:text-primary-purple transition duration-200 font-semibold text-center md:text-left">¿Quiénes somos?</a></li>
                 
                 <!-- Enlaces de autenticación / Perfil -->
                 {% if logged_in %}
-                    <li class="w-full py-2 md:w-auto md:py-0 flex items-center justify-center md:justify-start space-x-2 text-black"> {# Texto negro #}
+                    <li class="w-full py-2 md:w-auto md:py-0 flex items-center justify-center md:justify-start space-x-2 text-black">
                         <span class="font-semibold">Hola, {{ user_name or 'Usuario' }}</span>
                     </li>
-                    <li class="w-full py-2 md:w-auto md:py-0"><a href="{{ url_for('logout') }}" class="block text-black hover:text-primary-purple transition duration-200 font-semibold text-center md:text-left">Cerrar sesión</a></li> {# Texto negro #}
+                    <li class="w-full py-2 md:w-auto md:py-0"><a href="{{ url_for('logout') }}" class="block text-black hover:text-primary-purple transition duration-200 font-semibold text-center md:text-left">Cerrar sesión</a></li>
                 {% else %}
-                    <li class="w-full py-2 md:w-auto md:py-0"><a href="{{ url_for('show_login_form') }}" class="block text-black hover:text-primary-purple transition duration-200 font-semibold text-center md:text-left">Iniciar sesión</a></li> {# Texto negro #}
+                    <li class="w-full py-2 md:w-auto md:py-0"><a href="{{ url_for('show_login_form') }}" class="block text-black hover:text-primary-purple transition duration-200 font-semibold text-center md:text-left">Iniciar sesión</a></li>
                     <li class="w-full py-2 md:w-auto md:py-0">
-                        <a href="{{ url_for('show_register_form') }}" class="block bg-register-button text-black px-4 py-2 rounded-full hover:bg-register-button-hover transition duration-200 shadow-md font-semibold text-center flex justify-center items-center space-x-2"> {# CAMBIO AQUI: text-black #}
-                            <img src="{{ url_for('static', filename='images/Perfil_transparente.png') }}" alt="Registrarse" class="h-6 w-6"> {# IMAGEN PRIMERO, ELIMINADO: filter invert #}
-                            <span>Registrarse</span> {# TEXTO DESPUES #}
+                        <a href="{{ url_for('show_register_form') }}" class="block bg-register-button text-black px-4 py-2 rounded-full hover:bg-register-button-hover transition duration-200 shadow-md font-semibold text-center flex justify-center items-center space-x-2">
+                            <img src="{{ url_for('static', filename='images/Perfil_transparente.png') }}" alt="Registrarse" class="h-6 w-6">
+                            <span>Registrarse</span>
                         </a>
                     </li>
                 {% endif %}
@@ -90,22 +92,20 @@
 
     <main class="flex-grow">
         <!-- Sección Principal (Hero) con Fondo Transparente -->
-        <section id="hero-section" class="relative h-screen flex items-center justify-center text-black text-center p-4"> {# Texto principal negro #}
-            {# NO hay fondo aquí, se usa el fondo fijo del BODY #}
-            <div class="relative z-10 max-w-4xl mx-auto px-4"> {# Añadido px-4 para padding en móvil #}
-                <h1 class="text-3xl md:text-6xl font-extrabold leading-tight mb-4 drop-shadow-lg">Tienes el pase claro para confiar.</h1> {# Ajuste de tamaño de texto #}
-                <p class="text-base md:text-xl font-medium mb-8 drop-shadow-md">Tu proceso de importación comienza aquí. Lo hacemos posible.</p> {# Ajuste de tamaño de texto #}
+        <section id="hero-section" class="relative h-screen flex items-center justify-center text-black text-center p-4">
+            <div class="relative z-10 max-w-4xl mx-auto px-4">
+                <h1 class="text-3xl md:text-6xl font-extrabold leading-tight mb-4 drop-shadow-lg">Tienes el pase claro para confiar.</h1>
+                <p class="text-base md:text-xl font-medium mb-8 drop-shadow-md">Tu proceso de importación comienza aquí. Lo hacemos posible.</p>
             </div>
         </section>
 
         <!-- Sección Quiénes Somos - Fondo Transparente para usar el fondo del BODY -->
-        <section id="quienes-somos" class="relative overflow-hidden py-16 flex items-center justify-center my-8 bg-transparent"> {# bg-transparent para ver el fondo del BODY #}
-            
-        <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-center max-w-6xl mx-auto p-4 md:p-8"> {# Añadido p-4 para móvil #}
+        <section id="quienes-somos" class="relative overflow-hidden py-16 flex items-center justify-center my-8 bg-transparent">
+        <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-8 items-center justify-center max-w-6xl mx-auto p-4 md:p-8">
                 {# Logo "Clear ✓ Pass" en círculo - SOLO IMAGEN clear_logo.png #}
                 <div class="flex flex-col items-center justify-center text-center">
-                    <div class="w-40 h-40 rounded-full bg-white flex items-center justify-center relative z-10 shadow-lg mb-4 md:mb-0"> {# mb-4 para espaciado en móvil #}
-                        <img src="{{ url_for('static', filename='images/clear_logo.png') }}" alt="Clear Pass Logo" class="h-24 w-auto"> {# Imagen clear_logo.png #}
+                    <div class="w-40 h-40 rounded-full bg-white flex items-center justify-center relative z-10 shadow-lg mb-4 md:mb-0">
+                        <img src="{{ url_for('static', filename='images/clear_logo.png') }}" alt="Clear Pass Logo" class="h-24 w-auto">
                     </div>
                 </div>
 
@@ -127,8 +127,8 @@
         <p>&copy; 2025 Clear Pass. Todos los derechos reservados.</p>
     </footer>
 
-    <!-- Scripts de Google Sign-In y módulos JS -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Módulos JS -->
+    {# NO DUPLICAR LA CARGA DE GSI CLIENT AQUI, YA ESTA EN HEAD #}
     <script type="module" src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/auth.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/products.js') }}"></script>

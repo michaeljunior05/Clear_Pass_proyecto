@@ -8,41 +8,43 @@
 import { showMessage } from './ui.js'; // Importar la función showMessage
 
 /**
- * Función para manejar la respuesta del código de autorización de Google.
- * Esta función es un callback invocado por la librería GSI.
- * @param {Object} response - Objeto de respuesta de Google que contiene el código de autorización.
+ * Función para manejar la respuesta de credenciales de Google.
+ * Esta función es un callback invocado directamente por la librería GSI (desde data-callback).
+ * Recibe un objeto de respuesta que contiene el ID token JWT.
+ * ¡IMPORTANTE! Debe ser accesible globalmente (ej. window.handleCredentialResponse)
  */
-async function handleGoogleAuthCode(response) {
-    console.log("Respuesta de Google Auth Code recibida:", response);
-    const code = response.code;
+window.handleCredentialResponse = async (response) => {
+    console.log("Respuesta de credenciales de Google recibida:", response);
+    const idToken = response.credential; // Este es el JWT que necesitas enviar al backend
 
-    if (code) {
-        console.log("Enviando código de Google a /api/auth/google/callback...");
+    if (idToken) {
+        console.log("Enviando ID token de Google a /api/auth/google-login...");
         try {
-            const fetchResponse = await fetch('/api/auth/google/callback', {
+            // Asegúrate de que tu backend tenga una ruta /api/auth/google-login que espere un POST con JSON
+            const fetchResponse = await fetch('/api/auth/google-login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: new URLSearchParams({ code }),
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id_token: idToken }),
             });
             const data = await fetchResponse.json();
 
             if (fetchResponse.ok) {
                 showMessage('Inicio de sesión con Google exitoso. Redirigiendo...', 'success');
                 console.log('Inicio de sesión con Google exitoso (backend response):', data);
-                window.location.href = '/productos'; 
+                window.location.href = data.redirect_url || '/productos';
             } else {
                 showMessage(data.message || 'Error al iniciar sesión con Google', 'error');
                 console.error('Error en el inicio de sesión con Google (backend error):', data);
             }
         } catch (error) {
-            console.error('Error de red al intentar enviar el código de Google al backend:', error);
+            console.error('Error de red al intentar enviar el token de Google al backend:', error);
             showMessage('Error de red al intentar iniciar sesión con Google', 'error');
         }
     } else {
-        console.error("No se recibió el código de autorización de Google. Respuesta:", response);
-        showMessage('Error al iniciar sesión con Google: No se obtuvo el código de autorización.', 'error');
+        console.error("No se recibió el ID token de Google. Respuesta:", response);
+        showMessage('Error al iniciar sesión con Google: No se obtuvo el token.', 'error');
     }
-}
+};
 
 /**
  * Inicializa los formularios de login y registro.
@@ -85,12 +87,22 @@ export function initializeAuthForms() {
     if (registerForm) {
         registerForm.addEventListener('submit', async (event) => {
             event.preventDefault();
+            
             const emailInput = registerForm.querySelector('input[name="email"]');
-            const passwordInput = registerForm.querySelector('input[name="password"]');
-            const confirmPasswordInput = registerForm.querySelector('input[name="confirm_password"]');
+            const passwordInput = registerForm.querySelector('input[name="password"]'); 
+            const confirmPasswordInput = registerForm.querySelector('input[name="confirm_password"]'); 
+            
             const email = emailInput.value;
-            const password = passwordInput.value;
-            const confirmPassword = confirmPasswordInput.value;
+            // ¡ATENCIÓN AQUÍ! Añadir .trim() para eliminar espacios en blanco al inicio/final
+            const password = passwordInput.value.trim(); 
+            const confirmPassword = confirmPasswordInput.value.trim(); // Añadir .trim() aquí también
+
+            // Mantén estos console.log para el diagnóstico final si el problema persiste
+            console.log("Email:", email);
+            console.log("Contraseña (campo 1 - trimmed):", password);
+            console.log("Confirmar Contraseña (campo 2 - trimmed):", confirmPassword);
+            console.log("¿Coinciden (después de trim)?", password === confirmPassword);
+
 
             if (password !== confirmPassword) {
                 showMessage('Las contraseñas no coinciden', 'error');
@@ -101,7 +113,7 @@ export function initializeAuthForms() {
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ email, password, confirm_password }),
+                    body: new URLSearchParams({ email, password, confirm_password }), 
                 });
                 const data = await response.json();
 
@@ -121,38 +133,11 @@ export function initializeAuthForms() {
             }
         });
     }
-}
 
-/**
- * Inicializa el botón de Google Sign-In.
- */
-export function initializeGoogleSignIn() {
-    // Asegúrate de que el ID del botón es 'googleSignIn' en tu HTML
-    const googleSignInButton = document.getElementById('googleSignIn'); 
-    // ¡IMPORTANTE! Asegúrate de que este Client ID sea el más reciente y correcto de tu Google Cloud Console.
-    const googleClientId = '967793497246-m78gm3m77u9ebqgpev7h10op0lbpqepg.apps.googleusercontent.com'; 
 
-    if (googleSignInButton) {
-        // Verifica si la librería de Google GSI ya está cargada
-        if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-            const client = google.accounts.oauth2.initCodeClient({
-                client_id: googleClientId,
-                scope: 'openid email profile',
-                redirect_uri: 'https://127.0.0.1:5000/api/auth/google/callback', // AHORA ES HTTPS
-                ux_mode: 'popup', 
-                callback: handleGoogleAuthCode 
-                // Elimina o comenta si existe: auto_select: true,
-            });
-
-            // Mover client.requestCode() DENTRO del listener de clic del botón
-            googleSignInButton.addEventListener('click', () => {
-                console.log("Botón de Google clickeado. Solicitando código...");
-                client.requestCode({
-                    redirect_uri: 'https://127.0.0.1:5000/api/auth/google/callback' // Asegurar que es HTTPS
-                });
-            });
-        } else {
-            console.warn("Google API client no cargado. El botón de inicio de sesión de Google podría no funcionar.");
-        }
-    }
-}
+// Inicializar los formularios cuando el DOM esté completamente cargado.
+document.addEventListener('DOMContentLoaded', () => {
+    initializeAuthForms();
+    // No necesitamos llamar a initializeGoogleSignIn() aquí,
+    // ya que GSI se inicializa a través de los atributos data-* en el HTML.
+});

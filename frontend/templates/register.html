@@ -3,48 +3,111 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Registrarse</title>
+    <title>Clear Pass - Registrarse</title>
+    
+    {# Favicon: el logo en la pestaña del navegador #}
+    <link rel="icon" href="{{ url_for('static', filename='images/clear_logo.png') }}" type="image/png">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], // Usar Inter como fuente principal
+                    },
+                    colors: {
+                        'primary-purple': '#635BFF', // Tu color morado
+                        'secondary-blue': '#4285F4', // Azul de Google (si se mantiene en otros sitios)
+                        'gray-bg': '#f4f4f4', // Fondo gris claro
+                        'register-button': '#A299F7',
+                        'register-button-hover': '#B8B3F9',
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome para iconos -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+    <!-- Tu CSS consolidado para autenticación -->
     <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+
+    {# Carga el script de Google Identity Services UNA SOLA VEZ, preferiblemente aquí #}
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
-<body>
-    <div class="container">
-        <div class="left-section">
-            <div class="logo-circle">
-                <span class="logo-text">Clear</span>
-                <span class="logo-check">✔</span>
-                <span class="logo-text">Pass</span>
+<body class="font-sans bg-gray-bg min-h-screen flex items-center justify-center"
+      style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-attachment: fixed; background-size: cover; background-position: center;">
+
+    <div class="w-full h-screen flex">
+        {# Sección Izquierda con Logo (Fondo de Imagen) #}
+        <div class="flex-1 flex items-center justify-center relative p-8">
+            <div class="w-40 h-40 rounded-full bg-white flex flex-col items-center justify-center relative z-10 shadow-lg text-black text-center">
+                <span class="text-2xl font-bold">Clear</span>
+                <i class="fas fa-check-circle text-primary-purple text-3xl mx-1"></i>
+                <span class="text-2xl font-bold">Pass</span>
             </div>
         </div>
-        <div class="right-section">
-            <div class="login-box">
-                <h1 class="login-title">Registrarse</h1>
-                <p class="login-subtitle">Crea tu cuenta</p>
-                <form action="/api/register" method="POST" id="register-form">
-                    <div class="form-group">
-                        <input type="email" class="input-field" placeholder="Email" name="email" required>
+
+        {# Sección Derecha con Formulario (Overlay Blanco Translúcido) #}
+        <div class="flex-1 flex items-center justify-center p-8 bg-white bg-opacity-80 md:bg-opacity-80">
+            <div class="max-w-md w-full p-8 space-y-6 bg-transparent">
+                <h2 class="text-4xl font-bold text-gray-800 text-center">REGISTRARSE</h2>
+                <p class="text-gray-600 text-center mb-6">CREA TU CUENTA</p>
+
+                <form id="register-form" method="POST" action="/api/register" class="space-y-4">
+                    <div>
+                        <label for="email" class="sr-only">Email:</label>
+                        <input type="email" id="email" name="email" placeholder="Email:"
+                               class="bg-gray-100 border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
                     </div>
-                    <div class="form-group">
-                        <input type="password" class="input-field" placeholder="Contraseña" name="password" required>
+                    <div>
+                        <label for="password" class="sr-only">Contraseña:</label>
+                        <input type="password" id="password" name="password" placeholder="Contraseña:"
+                               class="bg-gray-100 border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
                     </div>
-                    <div class="form-group">
-                        <input type="password" class="input-field" placeholder="Confirmar Contraseña" name="confirm_password" required>
+                    <div>
+                        <label for="confirm_password" class="sr-only">Confirmar Contraseña:</label>
+                        <input type="password" id="confirm_password" name="confirm_password" placeholder="Confirmar Contraseña:"
+                               class="bg-gray-100 border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
                     </div>
-                    <button type="submit" class="login-button">Registrarse</button>
+                    <button type="submit"
+                            class="bg-register-button text-white px-6 py-3 rounded-md w-full font-semibold shadow-md hover:bg-register-button-hover transition duration-200">
+                        REGISTRARSE
+                    </button>
                 </form>
-                <div class="separator">o</div>
-                <button class="google-btn" id="googleSignIn">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google logo">
-                    Regístrate con tu cuenta de Google
-                </button>
-                <p class="login-subtitle">¿Ya tienes una cuenta? <a href="{{ url_for('show_login_form') }}">Iniciar sesión</a></p> {# CORREGIDO AQUI #}
+
+                <div class="my-6 text-center text-gray-500">O</div> {# Separador #}
+
+                {# EL DIV PRINCIPAL DE GOOGLE IDENTITY SERVICES - ¡CON data-client_id! #}
+                <div id="g_id_onload"
+                     data-client_id="{{ google_client_id }}" {# ¡ESTO ES CRÍTICO Y SE PASA DESDE FLASK! #}
+                     data-context="signup"
+                     data-ux_mode="popup"
+                     data-callback="handleCredentialResponse"
+                     data-auto_prompt="false">
+                </div>
+                {# ESTE ES EL DIV DONDE EL BOTÓN DE GOOGLE SE RENDERIZARÁ AUTOMÁTICAMENTE. #}
+                <div class="flex justify-center">
+                    <div class="g_id_signin" 
+                         data-type="standard" 
+                         data-shape="rectangular" 
+                         data-theme="outline" 
+                         data-text="signup_with"
+                         data-size="large" 
+                         data-logo_alignment="left">
+                        {# Google renderizará automáticamente el icono y el texto dentro de este div. #}
+                    </div>
+                </div>
+                <p class="text-center text-gray-600 mt-4">¿Ya tienes una cuenta? <a href="{{ url_for('show_login_form') }}" class="text-primary-purple hover:underline font-semibold">Iniciar sesión</a></p>
             </div>
         </div>
     </div>
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <!-- Cargar los módulos JavaScript -->
+
+    <!-- Módulos JS -->
     <script type="module" src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/auth.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/products.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

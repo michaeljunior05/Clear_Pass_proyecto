@@ -6,7 +6,8 @@
  * Coordina la inicialización de los diferentes módulos.
  */
 
-import { initializeAuthForms, initializeGoogleSignIn } from './auth.js';
+// Eliminar initializeGoogleSignIn de la importación
+import { initializeAuthForms } from './auth.js'; 
 import { initializeProductsPage, initializeProductDetailPage } from './products.js';
 
 /**
@@ -26,16 +27,7 @@ function initializeHomePage() {
             sectionQuienesSomos.scrollIntoView({ behavior: "smooth" });
         });
     }
-
-    // El efecto parallax en la imagen de fondo del BODY ahora es manejado por CSS:
-    // background-attachment: fixed; background-size: cover; background-position: center;
-    // Por lo tanto, no necesitamos manipular backgroundPositionY con JavaScript.
-    // document.addEventListener("scroll", function () {
-    //     let scrollPos = window.scrollY;
-    //     document.body.style.backgroundPositionY = `${scrollPos * 0.3}px`; 
-    // });
 }
-
 
 // Cuando el DOM esté completamente cargado, inicializar los módulos pertinentes.
 document.addEventListener('DOMContentLoaded', () => {
@@ -43,7 +35,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Las funciones de autenticación pueden necesitar inicializarse en varias páginas
     initializeAuthForms();
-    initializeGoogleSignIn();
+    // ELIMINAR LA LLAMADA A initializeGoogleSignIn(); YA NO SE EXPORTA NI SE NECESITA
+    // initializeGoogleSignIn(); 
 
     // La lógica de productos y detalles solo se inicializa en sus respectivas páginas.
     if (window.location.pathname === '/productos') {

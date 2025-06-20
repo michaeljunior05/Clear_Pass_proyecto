@@ -1,0 +1,33 @@
+
+bcrypt
+google-auth-oauthlib
+google-auth
+requests
+cryptography
+#requirements.txt
+#
+# Este archivo lista todas las dependencias de Python necesarias para tu backend Flask.
+# Incluye las librerías de Flask, las extensiones usadas, y las dependencias para Firebase Functions
+# y el servidor WSGI Gunicorn.
+
+# Core Flask Framework
+Flask # Puedes ajustar la versión a la que estés usando, o eliminar '==x.x.x' para la última compatible
+
+# Flask Extensions
+Flask-Session # Para la gestión de sesiones
+Flask-Cors   # Para la gestión de CORS (Cross-Origin Resource Sharing)
+
+# Firebase Functions Specific Dependencies
+ # La librería oficial de Python para Firebase Functions (ajusta la versión si hay una más reciente y estable)
+firebase-admin  # Esencial si planeas interactuar con otros servicios de Firebase como Auth o Firestore desde el backend
+
+# WSGI HTTP Server (utilizado por Firebase Functions para ejecutar tu app Flask)
+gunicorn # Un servidor WSGI popular y recomendado para producción
+
+# Otras dependencias de tu proyecto (añade aquí cualquier otra librería que uses)
+# Por ejemplo:
+# requests==2.31.0       # Si realizas peticiones HTTP
+# python-dotenv==1.0.1   # Si usas variables de entorno con .env
+# werkzeug==2.3.7        # Si Flask te lo pide o si utilizas ProxyFix
+# ... (añade cualquier otra librería que tengas en tu venv principal)
+
