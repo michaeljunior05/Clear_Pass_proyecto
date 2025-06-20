@@ -1,15 +1,15 @@
 # backend/repositories/user_repository.py
+from .base_repository import BaseRepository # Importa la clase base
 from backend.models.user import User
 from backend.repositories.json_storage import JSONStorage
 import os
-
 import bcrypt # Importar bcrypt
 from cryptography.fernet import Fernet # Importar Fernet
 import logging
 
 logger = logging.getLogger(__name__)
 
-class UserRepository:
+class UserRepository(BaseRepository):
     """
     Gestiona la persistencia de objetos User utilizando JSONStorage.
     Actúa como una capa de abstracción entre los controladores y la base de datos (JSON).

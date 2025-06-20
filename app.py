@@ -47,24 +47,20 @@ def create_app():
     CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://127.0.0.1:5000"]) 
 
     # --- Inicialización de Repositorios y Controladores (Inyección de Dependencias) ---
-
     json_storage = JSONStorage(data_file='data.json')
     logger.info("JSONStorage inicializado.")
     
     external_product_service = ExternalProductService(app.config['EXTERNAL_PRODUCTS_API_BASE_URL'])
     logger.info(f"ExternalProductService instanciado con base_url: {external_product_service.base_url}")
-
     user_repository = UserRepository(storage=json_storage)
-    
     product_repository = ProductRepository(external_product_service=external_product_service)
-    product_controller = ProductController(product_repository=product_repository)
-    
+
+
     auth_controller = AuthController(user_repository=user_repository, config=Config)
+    product_controller = ProductController(product_repository=product_repository)
     logger.info("AuthController y ProductController instanciados.")
 
-
     # --- Registro de Blueprints y Inyección de Controladores ---
-
     init_product_routes(product_controller)
     app.register_blueprint(product_bp) 
     logger.info("Blueprint 'product_bp' registrado con prefijo '/api'.")
@@ -83,13 +79,15 @@ def create_app():
 
     @app.route('/register', methods=['GET'])
     def show_register_form():
-        return render_template('register.html')
+        google_client_id = Config.GOOGLE_CLIENT_ID # Obtiene la ID del cliente de tu Config
+        return render_template('register.html', google_client_id=google_client_id)
     
     @app.route('/login', methods=['GET'])
     def show_login_form():
         if 'user_id' in session:
-            return redirect(url_for('productos_page')) 
-        return render_template('login.html')
+            return redirect(url_for('productos_page'))
+        google_client_id = Config.GOOGLE_CLIENT_ID # Obtiene la ID del cliente de tu Config
+        return render_template('login.html', google_client_id=google_client_id)
 
     @app.route('/productos') 
     def productos_page():
@@ -125,9 +123,10 @@ def create_app():
 
     return app
 
+app = create_app()
 # Bloque de ejecución principal
 if __name__ == '__main__':
     # Configuración de HTTPS para el servidor de desarrollo
-    app = create_app()
+    
     app.run(debug=True, ssl_context=('cert.pem', 'key.pem')) 
 

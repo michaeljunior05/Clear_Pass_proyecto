@@ -1,14 +1,1 @@
-{
-    "users": [
-        {
-            "id": "7bcebca5-87b9-4266-9963-cb82dc5a7516",
-            "email": "gAAAAABoTdX_Vt-lZGXvMKT8O8suITsifyaxGk-c3dCkYMBCv0iaHSBBhc7iOnIQPa3yfC0lKSAL3Bx5vpWogcPEoz3NZnw5IFqGEL1hT0JdSFh2faYoIlM=",
-            "password": "$2b$12$q1blUix97yyr3JX8HWBqveM5P2eEWNg461vdu0IH8AtehVXbpS6VC",
-            "name": "jf6610977",
-            "profile_picture_url": null,
-            "google_id": null,
-            "created_at": "2025-06-14T17:05:19.205380",
-            "updated_at": "2025-06-14T17:05:19.695089"
-        }
-    ]
-}
+{}

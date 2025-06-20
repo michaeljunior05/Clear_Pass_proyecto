@@ -34,6 +34,9 @@
 
     <!-- Tu CSS consolidado para autenticación -->
     <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+
+    {# Carga el script de Google Identity Services UNA SOLA VEZ, preferiblemente aquí #}
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body class="font-sans bg-gray-bg min-h-screen flex items-center justify-center"
       style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-attachment: fixed; background-size: cover; background-position: center;"> {# Fondo de la página #}
@@ -54,7 +57,7 @@
                 <h2 class="text-4xl font-bold text-gray-800 text-center">INICIAR SESIÓN</h2>
                 <p class="text-gray-600 text-center mb-6">INTRODUCE TU MAIL Y CONTRASEÑA</p>
 
-                <form id="login-form" method="POST" action="{{ url_for('show_login_form') }}" class="space-y-4"> {# CORRECCIÓN CRÍTICA AQUI #}
+                <form id="login-form" method="POST" action="/api/login" class="space-y-4"> {# ¡CAMBIO AQUI! #}
                     <div>
                         <label for="email" class="sr-only">Email:</label>
                         <input type="email" id="email" name="email" placeholder="Email:"
@@ -73,29 +76,37 @@
 
                 <div class="my-6 text-center text-gray-500">O</div> {# Separador #}
 
-                {# Botón de Google Sign-In #}
+                {# EL DIV PRINCIPAL DE GOOGLE IDENTITY SERVICES #}
                 <div id="g_id_onload"
-                     data-client_id="{{ google_client_id }}"
+                     data-client_id="{{ google_client_id }}" {# AHORA PASADO DESDE FLASK #}
                      data-context="signin"
                      data-ux_mode="popup"
-                     data-callback="handleCredentialResponse"
+                     data-callback="handleCredentialResponse" {# ESTA ES LA FUNCIÓN JS QUE GOOGLE LLAMARÁ #}
                      data-auto_prompt="false">
                 </div>
-                <div class="g_id_signin flex justify-center" data-type="standard" data-shape="rectangular" data-theme="outline" data-text="signin_with" data-size="large" data-logo_alignment="left">
-                    <button type="button" class="bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-md w-full font-semibold shadow-sm hover:bg-gray-100 transition duration-200 flex items-center justify-center space-x-2">
-                        <img src="{{ url_for('static', filename='images/google_icon.png') }}" alt="Google icon" class="h-5 w-5"> {# Icono de Google #}
-                        <span>Iniciar sesión con tu cuenta de trabajo de Google</span>
-                    </button>
+                {# ESTE ES EL DIV DONDE EL BOTÓN DE GOOGLE SE RENDERIZARÁ AUTOMÁTICAMENTE.
+                   HE ELIMINADO TU <button> PERSONALIZADO DE AQUÍ. #}
+                <div class="flex justify-center"> {# Puedes añadir tus clases de centrado aquí #}
+                    <div class="g_id_signin" 
+                         data-type="standard" 
+                         data-shape="rectangular" 
+                         data-theme="outline" 
+                         data-text="signin_with" 
+                         data-size="large" 
+                         data-logo_alignment="left">
+                        {# Google renderizará automáticamente el icono y el texto dentro de este div. #}
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts de Google Sign-In y módulos JS -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <!-- Módulos JS -->
+    {# NO DUPLICAR LA CARGA DE GSI CLIENT AQUI, YA ESTA EN HEAD #}
     <script type="module" src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/auth.js') }}"></script>
-    <script type="module" src="{{ url_for('static', filename='js/products.js') }}"></script> {# Mantener por si acaso otras páginas lo necesitan #}
-    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script> {# Mantener por si acaso otras páginas lo necesitan #}
+    {# Mantener solo los scripts relevantes para esta página #}
+    {# <script type="module" src="{{ url_for('static', filename='js/products.js') }}"></script> #}
+    {# <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script> #}
 </body>
 </html>
