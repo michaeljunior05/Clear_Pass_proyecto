@@ -23,21 +23,34 @@ def register():
     Endpoint para el registro de usuarios.
     """
     logger.info("Petición POST recibida en /api/register")
+    
+    # APLICAR .strip() para eliminar espacios en blanco al inicio/final
+    # También manejar el caso de None si el campo no está presente
     email = request.form.get('email')
     password = request.form.get('password')
     confirm_password = request.form.get('confirm_password')
 
+    # Aplicar .strip() si el valor no es None
+    email = email.strip() if email else None
+    password = password.strip() if password else None
+    confirm_password = confirm_password.strip() if confirm_password else None
+
+
     if not email or not password or not confirm_password:
+        logger.warning("Faltan campos requeridos en el registro.")
         return jsonify({'message': 'Todos los campos son requeridos.'}), 400
 
     if password != confirm_password:
+        logger.warning("Contraseñas NO coinciden en el backend después de strip.")
         return jsonify({'message': 'Las contraseñas no coinciden.'}), 400
-
+    
     result = _auth_controller.register_user(email, password)
     if result and result.get('message') == 'Registro exitoso. Ahora puedes iniciar sesión.':
         return jsonify(result), 201
     else:
-        return jsonify(result), 409 # Conflicto si el email ya existe, u otro error
+        # En caso de otros errores del controlador (ej. email ya existe)
+        status_code = 409 if result and 'email ya está registrado' in result.get('message', '').lower() else 400
+        return jsonify(result), status_code
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
@@ -45,16 +58,23 @@ def login():
     Endpoint para el inicio de sesión de usuarios.
     """
     logger.info("Petición POST recibida en /api/login")
+    
     email = request.form.get('email')
     password = request.form.get('password')
 
+    # Aplicar .strip() si el valor no es None
+    email = email.strip() if email else None
+    password = password.strip() if password else None
+
     if not email or not password:
+        logger.warning("Faltan campos requeridos en el login.")
         return jsonify({'message': 'Email y contraseña son requeridos.'}), 400
 
     result = _auth_controller.login_user(email, password)
     if result and result.get('message') == 'Inicio de sesión exitoso.':
         return jsonify(result), 200
     else:
+        logger.warning(f"Intento de inicio de sesión fallido para el email: {email}")
         return jsonify(result), 401 # No autorizado
 
 @auth_bp.route('/auth/google/callback', methods=['GET', 'POST'])
@@ -81,4 +101,3 @@ def google_callback():
     else:
         logger.error("Error al procesar el callback de Google en el controlador.")
         return jsonify({'message': 'Error al procesar el callback de Google'}), 401
-
