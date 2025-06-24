@@ -1,334 +1,280 @@
-    // frontend/static/js/products.js
+// frontend/static/js/products.js
 
-    /**
-     * @file products.js
-     * @description Centraliza la lógica de carga, búsqueda, paginación y visualización de productos.
-     */
+import { showMessage } from './ui.js'; // Asegúrate de que esta importación sea correcta
 
-    import { showMessage } from './ui.js'; 
+const API_BASE_URL = '/api';
+let currentPage = 1;
+const productsPerPage = 10;
+let totalPages = 1; // Variable global para almacenar el total de páginas
 
-    // Variables de estado para la paginación y filtros
-    let currentPage = 1;
-    const productsPerPage = 10;
-    let totalPages = 1;
-    let currentSearchTerm = '';
-    let currentCategory = ''; 
+/**
+ * Función para cargar y mostrar productos.
+ */
+export async function loadProducts(query = '', category = '') {
+    const productsContainer = document.getElementById('products-container');
+    const paginationControls = document.getElementById('pagination-controls');
+    const loadingIndicator = document.getElementById('loading-indicator');
 
-    // Referencias a elementos del DOM (se inicializan en las funciones de inicialización)
-    let productList, paginationControls, prevPageButton, nextPageButton, pageNumbersContainer;
-    let searchForm, searchInput, categoriesButton, categoriesDropdown;
-    let productDetailContainer;
+    if (!productsContainer || !paginationControls || !loadingIndicator) {
+        console.error("Elementos del DOM para productos no encontrados (container, paginación, indicador).");
+        return;
+    }
 
-    /**
-     * Carga y muestra productos según los filtros y la paginación.
-     * @param {string} searchTerm - Término de búsqueda.
-     * @param {string} category - Categoría de productos.
-     * @param {number} page - Número de página actual.
-     * @param {number} limit - Límite de productos por página.
-     */
-    async function loadProducts(searchTerm = '', category = '', page = 1, limit = productsPerPage) {
-        console.log(`products.js: Iniciando loadProducts con searchTerm='${searchTerm}', category='${category}', page=${page}.`); // Nuevo log
-        if (!productList) { 
-            console.warn("Elemento 'product-list' no encontrado. Esto no es la página /productos.");
+    productsContainer.innerHTML = '';
+    loadingIndicator.classList.remove('hidden');
+    showMessage('Cargando productos...', 'info');
+
+    // Cambiado 'offset' a 'page' para que coincida con el backend
+    let url = `${API_BASE_URL}/products?page=${currentPage}&limit=${productsPerPage}`; 
+    if (query) {
+        url += `&query=${encodeURIComponent(query)}`;
+    }
+    if (category) {
+        url += `&category=${encodeURIComponent(category)}`;
+    }
+
+    console.log(`products.js: Fetching products from: ${url}`); // Debugging
+
+    try {
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+            const errorText = await response.text(); // Obtener texto de error si JSON falla
+            let errorData = { message: 'Error desconocido' };
+            try {
+                errorData = JSON.parse(errorText);
+            } catch (e) {
+                // Si no es JSON, usamos el texto plano
+                errorData.message = errorText; 
+            }
+            throw new Error(errorData.message || `Error HTTP: ${response.status} ${response.statusText}`);
+        }
+
+        const data = await response.json(); // <-- RENOMBRADO a 'data' para evitar confusión
+
+        loadingIndicator.classList.add('hidden'); 
+
+        // === INICIO DE LA CORRECCIÓN CLAVE ===
+        const productsArray = data.products; // <-- Ahora obtenemos el array de productos de la propiedad 'products'
+        totalPages = data.total_pages; // Actualizar el total de páginas global
+        // === FIN DE LA CORRECCIÓN CLAVE ===
+
+        if (!productsArray || productsArray.length === 0) {
+            productsContainer.innerHTML = '<p class="text-gray-600 text-center col-span-full py-8">No se encontraron productos que coincidan con la búsqueda.</p>';
+            showMessage('No se encontraron productos.', 'info');
+            paginationControls.classList.add('hidden'); 
             return;
         }
 
-        productList.innerHTML = '<p class="loading-message">Cargando productos...</p>';
-        currentSearchTerm = searchTerm;
-        currentCategory = category;
-        currentPage = page;
+        productsArray.forEach(product => { // <-- Ahora se llama forEach en productsArray
+            const productCard = `
+                <div class="bg-white rounded-lg shadow-md overflow-hidden transform transition-transform duration-300 hover:scale-105 cursor-pointer" onclick="window.location.href='/product/${product.id}'">
+                    <img src="${product.image_url || 'https://placehold.co/400x300/e0e0e0/ffffff?text=No+Image'}" alt="${product.name}" class="w-full h-48 object-cover">
+                    <div class="p-4">
+                        <h3 class="font-semibold text-lg mb-2 truncate">${product.name}</h3>
+                        <p class="text-gray-700 text-sm mb-2">${product.category}</p>
+                        <p class="font-bold text-gray-900 text-xl">$${product.price ? product.price.toFixed(2) : 'N/A'}</p>
+                    </div>
+                </div>
+            `;
+            productsContainer.innerHTML += productCard;
+        });
 
-        try {
-            const params = new URLSearchParams();
-            if (searchTerm) params.append('query', searchTerm);
-            if (category) params.append('category', category);
-            params.append('page', page);
-            params.append('limit', limit);
+        paginationControls.classList.remove('hidden'); 
+        updatePaginationButtons(); // Ya no necesita currentProductsCount, usa totalPages
+        showMessage('Productos cargados exitosamente.', 'success');
 
-            const url = `/api/products?${params.toString()}`;
-            console.log(`products.js: Realizando fetch a ${url}`); // Nuevo log
-            
-            const response = await fetch(url, {
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
-            });
+    } catch (error) {
+        loadingIndicator.classList.add('hidden');
+        console.error('Error al cargar productos:', error);
+        showMessage(`Error al cargar productos: ${error.message}. Por favor, inténtalo de nuevo.`, 'error');
+        productsContainer.innerHTML = '<p class="text-red-600 text-center col-span-full py-8">Error al cargar productos. Por favor, verifica tu conexión o inténtalo más tarde.</p>';
+    }
+}
 
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
-                throw new Error(`HTTP error! status: ${response.status} - ${errorData.message || 'Error al obtener productos'}`);
-            }
+/**
+ * Actualiza el estado de los botones de paginación.
+ */
+function updatePaginationButtons() { // Ya no necesita currentProductsCount
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
 
-            const responseData = await response.json(); 
-            const productsData = responseData.products;
-            totalPages = responseData.total_pages;
+    if (prevButton) {
+        prevButton.disabled = currentPage === 1;
+        prevButton.classList.toggle('opacity-50', currentPage === 1);
+        prevButton.classList.toggle('cursor-not-allowed', currentPage === 1);
+    }
+    if (nextButton) {
+        // Habilitar siguiente solo si la página actual es menor que el total de páginas
+        nextButton.disabled = currentPage >= totalPages; 
+        nextButton.classList.toggle('opacity-50', currentPage >= totalPages);
+        nextButton.classList.toggle('cursor-not-allowed', currentPage >= totalPages);
+    }
+}
 
-            productList.innerHTML = ''; 
+/**
+ * Maneja el clic en el botón "Anterior".
+ */
+function goToPrevPage() {
+    if (currentPage > 1) {
+        currentPage--;
+        loadProducts(document.getElementById('search-input')?.value || '', document.getElementById('category-filter')?.value || '');
+    }
+}
 
-            if (productsData && productsData.length > 0) {
-                productsData.forEach(product => {
-                    const productItem = document.createElement('div');
-                    productItem.classList.add('product-item');
-                    productItem.dataset.productId = product.id; 
+/**
+ * Maneja el clic en el botón "Siguiente".
+ */
+function goToNextPage() {
+    if (currentPage < totalPages) { // Solo avanza si no es la última página
+        currentPage++;
+        loadProducts(document.getElementById('search-input')?.value || '', document.getElementById('category-filter')?.value || '');
+    }
+}
 
-                    productItem.innerHTML = `
-                        <img src="${product.image_url}" alt="${product.name}" class="product-image"
-                             onerror="this.onerror=null;this.src='https://placehold.co/200x200/cccccc/333333?text=No+Image';" >
-                        <h3>${product.name}</h3>
-                        <p>${product.description.substring(0, 100)}...</p>
-                        <p class="product-price">$${product.price.toFixed(2)}</p>
-                        <button class="view-details-button" data-product-id="${product.id}">Ver Detalles</button>
-                    `;
-                    productList.appendChild(productItem);
-                });
-                document.querySelectorAll('.view-details-button').forEach(button => {
-                    button.addEventListener('click', (e) => {
-                        const productId = e.target.dataset.productId;
-                        if (productId) {
-                            window.location.href = `/product/${productId}`;
-                        }
-                    });
-                });
-            } else {
-                productList.innerHTML = '<p class="no-products-message">No se encontraron productos que coincidan con tu búsqueda o filtros.</p>';
-            }
-            updatePaginationControls(); 
-        } catch (error) {
-            console.error('products.js: Error al cargar productos:', error); // Log actualizado
-            productList.innerHTML = `<p class="error-message">Error al cargar productos: ${error.message}. Por favor, inténtalo de nuevo.</p>`;
-        }
+/**
+ * Inicializa la página de productos.
+ */
+export function initializeProductsPage() {
+    console.log("products.js: Inicializando página de productos.");
+
+    const searchForm = document.querySelector('.search-form');
+    const searchInput = document.getElementById('search-input');
+    const categoryFilter = document.getElementById('category-filter'); 
+
+    if (searchForm) {
+        searchForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            currentPage = 1; // Resetear a la primera página en cada nueva búsqueda
+            const query = searchInput.value;
+            const category = categoryFilter ? categoryFilter.value : ''; 
+            loadProducts(query, category);
+        });
     }
 
-    /**
-     * Actualiza los controles de paginación (botones Anterior, Siguiente y números de página).
-     */
-    function updatePaginationControls() {
-        if (!paginationControls) return;
+    const prevButton = document.getElementById('prev-page');
+    const nextButton = document.getElementById('next-page');
 
-        prevPageButton.disabled = currentPage === 1;
-        nextPageButton.disabled = currentPage === totalPages || totalPages === 0; 
-
-        pageNumbersContainer.innerHTML = '';
-        const maxPageButtons = 5; 
-        let startPage = Math.max(1, currentPage - Math.floor(maxPageButtons / 2));
-        let endPage = Math.min(totalPages, startPage + maxPageButtons - 1);
-
-        if (endPage - startPage + 1 < maxPageButtons) {
-            startPage = Math.max(1, endPage - maxPageButtons + 1);
-        }
-        if (totalPages > 0 && startPage === 0) startPage = 1;
-
-
-        for (let i = startPage; i <= endPage; i++) {
-            const pageButton = document.createElement('button');
-            pageButton.textContent = i;
-            pageButton.classList.add('page-number-button');
-            if (i === currentPage) {
-                pageButton.classList.add('active');
-            }
-            pageButton.addEventListener('click', () => {
-                loadProducts(currentSearchTerm, currentCategory, i, productsPerPage);
-                const newUrl = new URL(window.location.href);
-                newUrl.searchParams.set('page', i);
-                window.history.pushState({ path: newUrl.href }, '', newUrl.href);
-            });
-            pageNumbersContainer.appendChild(pageButton);
-        }
+    if (prevButton) {
+        prevButton.addEventListener('click', goToPrevPage);
+    }
+    if (nextButton) {
+        nextButton.addEventListener('click', goToNextPage);
     }
 
-    /**
-     * Carga y muestra las categorías de productos disponibles.
-     */
-    async function loadCategories() {
-        if (!categoriesDropdown) return;
-        categoriesDropdown.innerHTML = '<p class="loading-categories">Cargando categorías...</p>'; 
+    // Cargar categorías al iniciar la página
+    loadCategories();
 
-        try {
-            const response = await fetch('/api/products/categories');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const categories = await response.json();
-
-            categoriesDropdown.innerHTML = ''; 
-
-            if (categories && categories.length > 0) {
-                const allCategoriesLink = document.createElement('a');
-                allCategoriesLink.href = '#';
-                allCategoriesLink.textContent = 'Todas las categorías';
-                allCategoriesLink.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    loadProducts(currentSearchTerm, '', 1, productsPerPage); 
-                    categoriesDropdown.classList.remove('show');
-                    categoriesButton.classList.remove('active'); 
-                    const newUrl = new URL(window.location.href);
-                    newUrl.searchParams.delete('category');
-                    newUrl.searchParams.set('page', '1');
-                    window.history.pushState({ path: newUrl.href }, '', newUrl.href);
-                });
-                categoriesDropdown.appendChild(allCategoriesLink);
-
-
-                categories.forEach(category => {
-                    const categoryLink = document.createElement('a');
-                    categoryLink.href = `#`; 
-                    categoryLink.textContent = category.charAt(0).toUpperCase() + category.slice(1); 
-                    categoryLink.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        loadProducts('', category, 1, productsPerPage); 
-                        if (searchInput) searchInput.value = ''; 
-                        categoriesDropdown.classList.remove('show'); 
-                        categoriesButton.classList.remove('active'); 
-                        const newUrl = new URL(window.location.href);
-                        newUrl.searchParams.set('category', category);
-                        newUrl.searchParams.delete('query'); 
-                        newUrl.searchParams.set('page', '1');
-                        window.history.pushState({ path: newUrl.href }, '', newUrl.href);
-                    });
-                    categoriesDropdown.appendChild(categoryLink);
-                });
-            } else {
-                categoriesDropdown.innerHTML = '<p style="padding: 10px; color: #777; font-style: italic;">No hay categorías disponibles.</p>';
-            }
-        } catch (error) {
-            console.error('products.js: Error al cargar categorías:', error); // Log actualizado
-            categoriesDropdown.innerHTML = `<p style="padding: 10px; color: red;">Error al cargar categorías.</p>`;
+    // Cargar productos iniciales (considerando parámetros de URL)
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialQuery = urlParams.get('query');
+    const initialCategory = urlParams.get('category');
+    if (initialQuery || initialCategory) {
+        if (searchInput) {
+            searchInput.value = initialQuery || ''; 
         }
+        if (categoryFilter) {
+            categoryFilter.value = initialCategory || '';
+        }
+        loadProducts(initialQuery || '', initialCategory || '');
+    } else {
+        loadProducts(); 
+    }
+}
+
+/**
+ * Función para cargar categorías dinámicamente en el filtro.
+ */
+async function loadCategories() {
+    const categoryFilter = document.getElementById('category-filter');
+    if (!categoryFilter) {
+        console.warn("Elemento 'category-filter' no encontrado, no se cargarán categorías.");
+        return;
     }
 
+    try {
+        const response = await fetch(`${API_BASE_URL}/categories`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const categories = await response.json();
 
-    /**
-     * Inicializa la lógica para la página de productos.
-     */
-    export function initializeProductsPage() {
-        console.log("products.js: Inicializando products page."); // Nuevo log
-        // Asignar referencias a los elementos del DOM
-        searchForm = document.querySelector('.search-form');
-        searchInput = document.getElementById('search-input');
-        productList = document.getElementById('product-list'); 
-        paginationControls = document.getElementById('pagination-controls');
-        prevPageButton = document.getElementById('prev-page');
-        nextPageButton = document.getElementById('next-page');
-        pageNumbersContainer = document.getElementById('page-numbers');
-        categoriesButton = document.getElementById('categories-button');
-        categoriesDropdown = document.getElementById('categories-dropdown');
+        // Limpiar opciones existentes (excepto la primera "Todas las categorías" si la tienes fija)
+        categoryFilter.innerHTML = '<option value="">Todas las categorías</option>'; 
         
-        // Listener para el botón de página anterior
-        if (prevPageButton) {
-            prevPageButton.addEventListener('click', () => {
-                if (currentPage > 1) {
-                    loadProducts(currentSearchTerm, currentCategory, currentPage - 1, productsPerPage);
-                }
-            });
-        }
+        categories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category;
+            option.textContent = category;
+            categoryFilter.appendChild(option);
+        });
+        console.log("Categorías cargadas:", categories);
+    } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        showMessage(`Error al cargar categorías: ${error.message}`, 'error');
+    }
+}
 
-        // Listener para el botón de página siguiente
-        if (nextPageButton) {
-            nextPageButton.addEventListener('click', () => {
-                if (currentPage < totalPages) {
-                    loadProducts(currentSearchTerm, currentCategory, currentPage + 1, productsPerPage);
-                }
-            });
-        }
 
-        // Listener para el formulario de búsqueda
-        if (searchForm) { 
-            searchForm.addEventListener('submit', function(event) {
-                event.preventDefault();
-                const searchTerm = searchInput.value;
-                loadProducts(searchTerm, '', 1, productsPerPage); 
-                const newUrl = new URL(window.location.href);
-                newUrl.searchParams.set('query', searchTerm);
-                newUrl.searchParams.delete('category'); 
-                newUrl.searchParams.set('page', '1');
-                window.history.pushState({ path: newUrl.href }, '', newUrl.href);
-            });
-        }
+/**
+ * Inicializa la página de detalles de un producto.
+ */
+export async function initializeProductDetailPage() {
+    console.log("products.js: Inicializando página de detalles del producto.");
+    const productId = window.location.pathname.split('/').pop();
+    const productDetailContainer = document.getElementById('product-detail-container');
+    const loadingIndicator = document.getElementById('detail-loading-indicator');
 
-        // Lógica para el botón de categorías
-        if (categoriesButton) { 
-            loadCategories(); 
-
-            categoriesButton.addEventListener('click', (event) => {
-                event.stopPropagation(); 
-                categoriesDropdown.classList.toggle('show');
-                categoriesButton.classList.toggle('active'); 
-            });
-
-            document.addEventListener('click', (event) => {
-                if (categoriesDropdown && categoriesDropdown.classList.contains('show') && !categoriesDropdown.contains(event.target) && event.target !== categoriesButton && !categoriesButton.contains(event.target)) {
-                    categoriesDropdown.classList.remove('show');
-                    categoriesButton.classList.remove('active'); 
-                }
-            });
-        }
-
-        // Carga inicial de productos al entrar a la página
-        const urlParams = new URLSearchParams(window.location.search);
-        const initialSearchQuery = urlParams.get('query') || '';
-        const initialCategory = urlParams.get('category') || '';
-        const initialPage = parseInt(urlParams.get('page')) || 1;
-
-        if (searchInput) searchInput.value = initialSearchQuery; 
-        
-        loadProducts(initialSearchQuery, initialCategory, initialPage, productsPerPage);
+    if (!productDetailContainer || !loadingIndicator) {
+        console.error("Contenedor de detalles del producto o indicador de carga no encontrados.");
+        return;
     }
 
-    /**
-     * Inicializa la lógica para la página de detalles de producto.
-     */
-    export async function initializeProductDetailPage() {
-        console.log("products.js: Inicializando product detail page."); // Nuevo log
-        productDetailContainer = document.querySelector('.product-detail-container'); 
-        const productId = window.location.pathname.split('/').pop(); 
-        console.log(`products.js: Cargando detalles para el producto ID: ${productId}`); // Log actualizado
-        
-        if (productDetailContainer) { 
-            productDetailContainer.innerHTML = '<p>Cargando detalles del producto...</p>';
-        }
+    loadingIndicator.classList.remove('hidden');
+    showMessage('Cargando detalles del producto...', 'info');
 
-        if (productId) {
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+        if (!response.ok) {
+            const errorText = await response.text();
+            let errorData = { message: 'Error desconocido' };
             try {
-                const response = await fetch(`/api/products/${productId}`);
-                if (!response.ok) {
-                    if (response.status === 404) {
-                        if (productDetailContainer) productDetailContainer.innerHTML = '<p>Producto no encontrado o no es de una categoría tecnológica válida.</p>';
-                    } else {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-                    return;
-                }
-
-                const product = await response.json();
-
-                if (productDetailContainer) {
-                    productDetailContainer.innerHTML = `
-                        <img src="${product.image_url}" alt="${product.name}" class="product-detail-image"
-                             onerror="this.onerror=null;this.src='https://placehold.co/400x400/cccccc/333333?text=No+Image';">
-                        <div class="product-detail-info">
-                            <h1 class="product-detail-title">${product.name}</h1>
-                            <p class="product-detail-category">Categoría: ${product.category}</p>
-                            <p class="product-detail-origin">Origen: ${product.origin || 'No especificado'}</p>
-                            <p class="product-detail-price">$${product.price.toFixed(2)}</p>
-                            <p class="product-detail-description">${product.description}</p>
-                            <div class="product-detail-rating">
-                                Calificación: ${product.rating.rate} <i class="fas fa-star"></i> (${product.rating.count} votos)
-                            </div>
-                            <button class="add-to-cart-detail-button">Añadir al Carrito</button>
-                        </div>
-                    `;
-                    const addToCartButton = productDetailContainer.querySelector('.add-to-cart-detail-button');
-                    if (addToCartButton) {
-                        addToCartButton.addEventListener('click', () => {
-                            showMessage('Funcionalidad de añadir al carrito aún no implementada.', 'info');
-                        });
-                    }
-                }
-
-            } catch (error) {
-                console.error('products.js: Error al cargar detalles del producto:', error); // Log actualizado
-                if (productDetailContainer) productDetailContainer.innerHTML = `<p class="error-message">Error al cargar detalles: ${error.message}.</p>`;
+                errorData = JSON.parse(errorText);
+            } catch (e) {
+                errorData.message = errorText;
             }
-        } else {
-            if (productDetailContainer) productDetailContainer.innerHTML = '<p>ID de producto no proporcionado.</p>';
+            throw new Error(errorData.message || `Error HTTP: ${response.status} ${response.statusText}`);
         }
+        const product = await response.json();
+
+        loadingIndicator.classList.add('hidden');
+        if (product) {
+            const detailHtml = `
+                <div class="flex flex-col md:flex-row bg-white rounded-lg shadow-xl p-6 md:p-8 space-y-6 md:space-y-0 md:space-x-8 max-w-4xl mx-auto">
+                    <div class="md:w-1/2 flex justify-center items-center">
+                        <img src="${product.image_url || 'https://placehold.co/600x400/e0e0e0/ffffff?text=No+Image'}" alt="${product.name}" class="max-w-full h-auto rounded-lg shadow-md">
+                    </div>
+                    <div class="md:w-1/2 space-y-4">
+                        <h1 class="text-3xl md:text-4xl font-bold text-gray-800">${product.name}</h1>
+                        <p class="text-xl text-primary-purple">${product.category}</p>
+                        <p class="text-gray-700">${product.description}</p>
+                        <p class="text-4xl font-extrabold text-gray-900">$${product.price ? product.price.toFixed(2) : 'N/A'}</p>
+                        <button class="bg-primary-purple text-white px-6 py-3 rounded-md font-semibold hover:bg-register-button-hover transition duration-200 shadow-md">
+                            Añadir al Carrito
+                        </button>
+                    </div>
+                </div>
+            `;
+            productDetailContainer.innerHTML = detailHtml;
+            showMessage('Detalles del producto cargados.', 'success');
+        } else {
+            productDetailContainer.innerHTML = '<p class="text-red-600 text-center py-8">Producto no encontrado.</p>';
+            showMessage('Producto no encontrado.', 'error');
+        }
+    } catch (error) {
+        loadingIndicator.classList.add('hidden');
+        console.error('Error al cargar detalles del producto:', error);
+        showMessage(`Error al cargar detalles: ${error.message}.`, 'error');
+        productDetailContainer.innerHTML = '<p class="text-red-600 text-center py-8">Error al cargar detalles del producto.</p>';
     }
-    
+}

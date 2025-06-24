@@ -93,16 +93,10 @@ export function initializeAuthForms() {
             const confirmPasswordInput = registerForm.querySelector('input[name="confirm_password"]'); 
             
             const email = emailInput.value;
-            // ¡ATENCIÓN AQUÍ! Añadir .trim() para eliminar espacios en blanco al inicio/final
             const password = passwordInput.value.trim(); 
-            const confirmPassword = confirmPasswordInput.value.trim(); // Añadir .trim() aquí también
+            const confirmPassword = confirmPasswordInput.value.trim(); // <-- AQUI YA ES EL VALOR
 
-            // Mantén estos console.log para el diagnóstico final si el problema persiste
-            console.log("Email:", email);
-            console.log("Contraseña (campo 1 - trimmed):", password);
-            console.log("Confirmar Contraseña (campo 2 - trimmed):", confirmPassword);
-            console.log("¿Coinciden (después de trim)?", password === confirmPassword);
-
+            // Los console.log de depuración ya están bien en auth.js
 
             if (password !== confirmPassword) {
                 showMessage('Las contraseñas no coinciden', 'error');
@@ -110,10 +104,11 @@ export function initializeAuthForms() {
             }
 
             try {
+                // ASEGURATE QUE CONFIRM_PASSWORD SE PASA COMO EL VALOR YA OBTENIDO
                 const response = await fetch('/api/register', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: new URLSearchParams({ email, password, confirm_password }), 
+                    body: new URLSearchParams({ email, password, confirm_password: confirmPassword }), // <-- ¡CAMBIO CLAVE AQUÍ!
                 });
                 const data = await response.json();
 
@@ -131,9 +126,9 @@ export function initializeAuthForms() {
                 console.error('Error de red:', error);
                 showMessage('Error de red al intentar registrarse', 'error');
             }
-        });
+        }); 
     }
-
+}
 
 // Inicializar los formularios cuando el DOM esté completamente cargado.
 document.addEventListener('DOMContentLoaded', () => {

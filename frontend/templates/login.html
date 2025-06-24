@@ -21,8 +21,9 @@
                         'primary-purple': '#635BFF', // Tu color morado
                         'secondary-blue': '#4285F4', // Azul de Google
                         'gray-bg': '#f4f4f4', // Fondo gris claro
-                        'register-button': '#A299F7', // Color exacto del botón de registro/ingresar de la imagen de referencia
-                        'register-button-hover': '#B8B3F9', // Un tono ligeramente más claro para el hover
+                        'register-button': '#635BFF', // Cambiado al morado de la imagen
+                        'register-button-hover': '#7A72FF', // Un tono ligeramente más claro para el hover
+                        'input-bg': '#FFFFFF', // Fondo blanco para los inputs
                     }
                 }
             }
@@ -38,66 +39,61 @@
     {# Carga el script de Google Identity Services UNA SOLA VEZ, preferiblemente aquí #}
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
-<body class="font-sans bg-gray-bg min-h-screen flex items-center justify-center"
-      style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-attachment: fixed; background-size: cover; background-position: center;"> {# Fondo de la página #}
+<body class="font-sans bg-gray-bg min-h-screen flex items-center justify-center p-4"
+      style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-size: cover; background-position: center;">
 
-    <div class="w-full h-screen flex">
-        {# Sección Izquierda con Logo (Fondo de Imagen) #}
-        <div class="flex-1 flex items-center justify-center relative p-8">
-            <div class="w-40 h-40 rounded-full bg-white flex flex-col items-center justify-center relative z-10 shadow-lg text-black text-center">
-                <span class="text-2xl font-bold">Clear</span>
-                <i class="fas fa-check-circle text-primary-purple text-3xl mx-1"></i>
-                <span class="text-2xl font-bold">Pass</span>
+    <div class="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
+        {# Encabezado #}
+        <div class="bg-white p-8">
+            <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">INICIAR SESIÓN</h1>
+            <p class="text-gray-600 text-center mb-6">INTRODUCE TU MAIL Y CONTRASEÑA</p>
+
+            <form id="login-form" method="POST" action="/api/login" class="space-y-4">
+                <div>
+                    <label for="email" class="sr-only">Email:</label>
+                    <input type="email" id="email" name="email" placeholder="Email:"
+                           class="bg-input-bg border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
+                </div>
+                <div>
+                    <label for="password" class="sr-only">Contraseña:</label>
+                    <input type="password" id="password" name="password" placeholder="Contraseña:"
+                           class="bg-input-bg border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
+                </div>
+                <button type="submit"
+                        class="bg-register-button text-white px-6 py-3 rounded-md w-full font-semibold shadow-md hover:bg-register-button-hover transition duration-200">
+                    INGRESAR
+                </button>
+            </form>
+        </div>
+
+        {# Separador con logo Clear Pass #}
+        <div class="relative py-4">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-gray-300"></div>
+            </div>
+            <div class="relative flex justify-center">
+                <div class="px-4 bg-white flex items-center">
+                    <span class="text-lg font-bold">Clear</span>
+                    <i class="fas fa-check-circle text-primary-purple text-xl mx-1"></i>
+                    <span class="text-lg font-bold">Pass</span>
+                </div>
             </div>
         </div>
 
-        {# Sección Derecha con Formulario (Overlay Blanco Translúcido) #}
-        <div class="flex-1 flex items-center justify-center p-8 bg-white bg-opacity-80 md:bg-opacity-80"> {# Fondo blanco semi-transparente #}
-            <div class="max-w-md w-full p-8 space-y-6 bg-transparent"> {# El formulario en sí no tiene un fondo blanco sólido, ya que el contenedor padre ya lo tiene #}
-                <h2 class="text-4xl font-bold text-gray-800 text-center">INICIAR SESIÓN</h2>
-                <p class="text-gray-600 text-center mb-6">INTRODUCE TU MAIL Y CONTRASEÑA</p>
-
-                <form id="login-form" method="POST" action="/api/login" class="space-y-4"> {# ¡CAMBIO AQUI! #}
-                    <div>
-                        <label for="email" class="sr-only">Email:</label>
-                        <input type="email" id="email" name="email" placeholder="Email:"
-                               class="bg-gray-100 border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
-                    </div>
-                    <div>
-                        <label for="password" class="sr-only">Contraseña:</label>
-                        <input type="password" id="password" name="password" placeholder="Contraseña:"
-                               class="bg-gray-100 border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
-                    </div>
-                    <button type="submit"
-                            class="bg-register-button text-white px-6 py-3 rounded-md w-full font-semibold shadow-md hover:bg-register-button-hover transition duration-200">
-                        INGRESAR
-                    </button>
-                </form>
-
-                <div class="my-6 text-center text-gray-500">O</div> {# Separador #}
-
-                {# EL DIV PRINCIPAL DE GOOGLE IDENTITY SERVICES #}
-                <div id="g_id_onload"
-                     data-client_id="{{ google_client_id }}" {# AHORA PASADO DESDE FLASK #}
-                     data-context="signin"
-                     data-ux_mode="popup"
-                     data-callback="handleCredentialResponse" {# ESTA ES LA FUNCIÓN JS QUE GOOGLE LLAMARÁ #}
-                     data-auto_prompt="false">
-                </div>
-                {# ESTE ES EL DIV DONDE EL BOTÓN DE GOOGLE SE RENDERIZARÁ AUTOMÁTICAMENTE.
-                   HE ELIMINADO TU <button> PERSONALIZADO DE AQUÍ. #}
-                <div class="flex justify-center"> {# Puedes añadir tus clases de centrado aquí #}
-                    <div class="g_id_signin" 
-                         data-type="standard" 
-                         data-shape="rectangular" 
-                         data-theme="outline" 
-                         data-text="signin_with" 
-                         data-size="large" 
-                         data-logo_alignment="left">
-                        {# Google renderizará automáticamente el icono y el texto dentro de este div. #}
-                    </div>
+        {# Pie de página con botón de Google #}
+        <div class="bg-white p-8 pt-0">
+            <div class="flex justify-center">
+                <div class="g_id_signin" 
+                     data-type="standard" 
+                     data-shape="rectangular" 
+                     data-theme="outline" 
+                     data-text="signin_with" 
+                     data-size="large" 
+                     data-logo_alignment="left"
+                     data-width="300">
                 </div>
             </div>
+            <p class="text-center text-gray-600 mt-4">Iniciar sesión con tu cuenta de trabajo de Google</p>
         </div>
     </div>
 
@@ -105,8 +101,5 @@
     {# NO DUPLICAR LA CARGA DE GSI CLIENT AQUI, YA ESTA EN HEAD #}
     <script type="module" src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/auth.js') }}"></script>
-    {# Mantener solo los scripts relevantes para esta página #}
-    {# <script type="module" src="{{ url_for('static', filename='js/products.js') }}"></script> #}
-    {# <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script> #}
 </body>
 </html>

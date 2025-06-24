@@ -9,6 +9,7 @@ from datetime import timedelta
 from flask_cors import CORS
 
 # Configuración del logging
+# Mantenemos INFO para producción, pero puedes cambiar a DEBUG si necesitas más detalles en la consola
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,16 @@ from backend.controllers.product_controller import ProductController
 from backend.routes.auth_routes import auth_bp, init_auth_routes
 from backend.routes.product_routes import product_bp, init_product_routes
 
+# --- NUEVAS IMPORTACIONES PARA IMPORTADORES ---
+from backend.models.importer import Importer # Aunque no se instancie directamente, es buena práctica si se usa en typings
+from backend.repositories.importer_repository import ImporterRepository
+from backend.services.importer_ranking_service import ImporterRankingService
+from backend.controllers.auth_controller import AuthController
+from backend.controllers.product_controller import ProductController
+# --- FIN NUEVAS IMPORTACIONES ---
+# --- NUEVA IMPORTACIÓN PARA RUTAS DE IMPORTADORES ---
+from backend.routes.importer_routes import importer_bp, init_importer_routes
+
 def create_app():
     app = Flask(
         __name__,
@@ -38,26 +49,38 @@ def create_app():
 
     app.config.from_object(Config)
 
-    app.config["SESSION_PERMANENT"] = True
-    app.config["SESSION_TYPE"] = "filesystem"
-    app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=24)
+    app.config["SESSION_PERMANENT"] = Config.SESSION_PERMANENT # <-- Usa Config aquí
+    app.config["SESSION_TYPE"] = Config.SESSION_TYPE # <-- Usa Config aquí
+    app.config['PERMANENT_SESSION_LIFETIME'] = Config.PERMANENT_SESSION_LIFETIME # <-- Usa Config aquí
     Session(app)
 
-    # AÑADIR HTTPS A ORIGINS EN CORS
-    CORS(app, supports_credentials=True, origins=["http://localhost:5173", "http://127.0.0.1:5173", "https://127.0.0.1:5000"]) 
+    # --- CORRECCIÓN CLAVE: AÑADIR LA URL DE TU REPLIT A LOS ORÍGENES PERMITIDOS EN CORS ---
+    # Esto es CRÍTICO para que el frontend en Replit pueda hacer fetch al backend.
+    # Se añade la URL de tu Replit, más los orígenes locales de desarrollo.
+    CORS(app, supports_credentials=True, 
+         origins=[
+             "http://localhost:5173",       # Para desarrollo con Vite (si aplica)
+             "http://127.0.0.1:5173",       # Para desarrollo con Vite (si aplica)
+             "https://127.0.0.1:5000",      # Para tu servidor Flask local con HTTPS
+             "https://7ae08de5-5e6b-413e-8ffa-8d687bce8c2b-00-2i3kzc743oqsk.riker.replit.dev" # ¡TU URL ESPECÍFICA DE REPLIT!
+         ]) 
 
     # --- Inicialización de Repositorios y Controladores (Inyección de Dependencias) ---
-    json_storage = JSONStorage(data_file='data.json')
+    json_storage = JSONStorage(data_file=Config.JSON_DATABASE_PATH) # <-- Usa Config aquí
     logger.info("JSONStorage inicializado.")
     
-    external_product_service = ExternalProductService(app.config['EXTERNAL_PRODUCTS_API_BASE_URL'])
+    external_product_service = ExternalProductService(Config.EXTERNAL_PRODUCTS_API_BASE_URL) # <-- Usa Config aquí
     logger.info(f"ExternalProductService instanciado con base_url: {external_product_service.base_url}")
     user_repository = UserRepository(storage=json_storage)
-    product_repository = ProductRepository(external_product_service=external_product_service)
-
-
+    # --- INICIALIZACIÓN DE IMPORTADORES ---
+    importer_repository = ImporterRepository(storage=json_storage)
+    importer_ranking_service = ImporterRankingService(importer_repository)
+    logger.info("ImporterRepository e ImporterRankingService inicializados.")
+    # --- FIN INICIALIZACIÓN IMPORTADORES ---
+    
     auth_controller = AuthController(user_repository=user_repository, config=Config)
-    product_controller = ProductController(product_repository=product_repository)
+    # <-- CORRECCIÓN CLAVE: Pasa external_product_service, no product_repository
+    product_controller = ProductController(external_product_service=external_product_service) 
     logger.info("AuthController y ProductController instanciados.")
 
     # --- Registro de Blueprints y Inyección de Controladores ---
@@ -69,6 +92,13 @@ def create_app():
     app.register_blueprint(auth_bp, url_prefix= '/api') 
     logger.info("Blueprint 'auth_bp' registrado con prefijo '/api'.")
 
+    # --- REGISTRO DE BLUEPRINT DE IMPORTADORES ---
+    init_importer_routes(importer_ranking_service, user_repository) # Pasar el servicio y el repo de usuarios
+    app.register_blueprint(importer_bp, url_prefix='/api') # Usar /api para consistencia
+    logger.info("Blueprint 'importer_bp' registrado con prefijo '/api'.")
+    # --- FIN REGISTRO IMPORTADORES ---
+
+
     # --- Rutas para renderizar las páginas HTML del Frontend ---
     
     @app.route('/')
@@ -79,14 +109,16 @@ def create_app():
 
     @app.route('/register', methods=['GET'])
     def show_register_form():
-        google_client_id = Config.GOOGLE_CLIENT_ID # Obtiene la ID del cliente de tu Config
+        # ¡IMPORTANTE! Pasa el google_client_id a la plantilla de registro
+        google_client_id = Config.GOOGLE_CLIENT_ID 
         return render_template('register.html', google_client_id=google_client_id)
     
     @app.route('/login', methods=['GET'])
     def show_login_form():
         if 'user_id' in session:
-            return redirect(url_for('productos_page'))
-        google_client_id = Config.GOOGLE_CLIENT_ID # Obtiene la ID del cliente de tu Config
+            return redirect(url_for('productos_page')) 
+        # ¡IMPORTANTE! Pasa el google_client_id a la plantilla de login
+        google_client_id = Config.GOOGLE_CLIENT_ID 
         return render_template('login.html', google_client_id=google_client_id)
 
     @app.route('/productos') 
@@ -95,9 +127,9 @@ def create_app():
         user_name = session.get('user_name', 'Usuario')
         initial_search_query = request.args.get('query', '')
         return render_template('productos.html', 
-                               logged_in=logged_in, 
-                               user_name=user_name, 
-                               initial_search_query=initial_search_query) 
+                                logged_in=logged_in, 
+                                user_name=user_name, 
+                                initial_search_query=initial_search_query) 
 
     @app.route('/logout')
     def logout():
@@ -120,13 +152,15 @@ def create_app():
         user_name = session.get('user_name', 'Usuario')
         return render_template('product_detail.html', product_id=product_id, logged_in=logged_in, user_name=user_name)
 
+    @app.route('/perfil')
+    def profile_page():
+        logged_in = 'user_id' in session 
+        user_name = session.get('user_name', 'Invitado') 
+        return render_template('profile.html', logged_in=logged_in, user_name=user_name)
+
 
     return app
 
 app = create_app()
-# Bloque de ejecución principal
 if __name__ == '__main__':
-    # Configuración de HTTPS para el servidor de desarrollo
-    
-    app.run(debug=True, ssl_context=('cert.pem', 'key.pem')) 
-
+    app.run(debug=True, ssl_context=('cert.pem', 'key.pem'))

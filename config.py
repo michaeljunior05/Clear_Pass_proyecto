@@ -17,7 +17,7 @@ class Config:
     GOOGLE_CLIENT_SECRET_FILE = os.environ.get('GOOGLE_CLIENT_SECRET_FILE', 'credentials/client_secret.json') 
 
     # Configuración de la API externa de productos (ej. FakeStoreAPI)
-    EXTERNAL_PRODUCTS_API_BASE_URL = os.environ.get('EXTERNAL_PRODUCTS_API_BASE_URL', 'https://fakestoreapi.com')
+    EXTERNAL_PRODUCTS_API_BASE_URL = os.environ.get('EXTERNAL_PRODUCTS_API_BASE_URL', 'https://dummyjson.com')
     EXTERNAL_PRODUCTS_API_KEY = os.environ.get('EXTERNAL_PRODUCTS_API_KEY', 'your_external_api_key_if_needed') 
 
     # Configuración de la base de datos JSON (para JSONStorage)

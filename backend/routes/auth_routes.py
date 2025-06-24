@@ -1,17 +1,17 @@
 # backend/routes/auth_routes.py
-from flask import Blueprint, request, jsonify, session, redirect, url_for
+from flask import Blueprint, jsonify, request, session, url_for, redirect
 import logging
-from backend.controllers.auth_controller import AuthController
 
 logger = logging.getLogger(__name__)
 
-auth_bp = Blueprint('auth_api', __name__)
+auth_bp = Blueprint('auth_bp', __name__)
 
-_auth_controller: AuthController = None
+_auth_controller = None 
 
-def init_auth_routes(controller: AuthController):
+def init_auth_routes(controller):
     """
-    Función para inicializar las rutas de autenticación con el controlador adecuado.
+    Inicializa las rutas de autenticación con el controlador inyectado.
+    Esta función debe ser llamada desde app.py.
     """
     global _auth_controller
     _auth_controller = controller
@@ -20,65 +20,155 @@ def init_auth_routes(controller: AuthController):
 @auth_bp.route('/register', methods=['POST'])
 def register():
     """
-    Endpoint para el registro de usuarios.
+    Ruta para el registro de nuevos usuarios.
+    Extrae datos de request.form y los pasa al AuthController.
     """
-    logger.info("Petición POST recibida en /api/register")
+    logger.info("Petición POST recibida en /api/register (form-urlencoded)")
+    if not _auth_controller:
+        logger.error("AuthController no inicializado.")
+        return jsonify({"message": "Servicio de autenticación no disponible"}), 500
+    
     email = request.form.get('email')
     password = request.form.get('password')
-    confirm_password = request.form.get('confirm_password')
+    name = request.form.get('name')
+    phone_number = request.form.get('phone_number')
+    dni = request.form.get('dni')
 
-    if not email or not password or not confirm_password:
-        return jsonify({'message': 'Todos los campos son requeridos.'}), 400
-
-    if password != confirm_password:
-        return jsonify({'message': 'Las contraseñas no coinciden.'}), 400
-
-    result = _auth_controller.register_user(email, password)
-    if result and result.get('message') == 'Registro exitoso. Ahora puedes iniciar sesión.':
-        return jsonify(result), 201
-    else:
-        return jsonify(result), 409 # Conflicto si el email ya existe, u otro error
+    # === CAMBIO CLAVE AQUÍ: Desempaquetar la tupla de retorno ===
+    json_response_obj, status_code = _auth_controller.register_user(
+        email=email, password=password, name=name, phone_number=phone_number, dni=dni
+    ) 
+    
+    # La variable 'json_response_obj' ahora es el objeto jsonify (dict-like)
+    # y 'status_code' es el entero.
+    # Ya no es necesario el 'if result and result.get...' porque el controlador
+    # ya devuelve el objeto jsonify con el mensaje.
+    return json_response_obj, status_code
 
 @auth_bp.route('/login', methods=['POST'])
 def login():
     """
-    Endpoint para el inicio de sesión de usuarios.
+    Ruta para el inicio de sesión de usuarios.
+    Extrae datos de request.form y los pasa al AuthController.
     """
-    logger.info("Petición POST recibida en /api/login")
+    logger.info("Petición POST recibida en /api/login (form-urlencoded)")
+    if not _auth_controller:
+        logger.error("AuthController no inicializado.")
+        return jsonify({"message": "Servicio de autenticación no disponible"}), 500
+    
     email = request.form.get('email')
     password = request.form.get('password')
 
-    if not email or not password:
-        return jsonify({'message': 'Email y contraseña son requeridos.'}), 400
+    # === CAMBIO CLAVE AQUÍ: Desempaquetar la tupla de retorno ===
+    json_response_obj, status_code = _auth_controller.login_user(email=email, password=password)
+    return json_response_obj, status_code
 
-    result = _auth_controller.login_user(email, password)
-    if result and result.get('message') == 'Inicio de sesión exitoso.':
-        return jsonify(result), 200
-    else:
-        return jsonify(result), 401 # No autorizado
-
-@auth_bp.route('/auth/google/callback', methods=['GET', 'POST'])
-def google_callback():
+@auth_bp.route('/auth/google-login', methods=['POST'])
+def google_login_api():
     """
-    Endpoint de callback para la autenticación de Google OAuth.
-    Este endpoint es alcanzado por la redirección de Google o por la petición JS del frontend.
+    Ruta para manejar el inicio de sesión/registro con Google (GSI).
+    Sigue esperando el JWT en el cuerpo JSON (manejado por el controlador).
     """
-    logger.info("Petición recibida en /api/auth/google/callback")
+    logger.info("Petición POST recibida en /api/auth/google-login (JSON)")
+    if not _auth_controller:
+        logger.error("AuthController no inicializado.")
+        return jsonify({"message": "Servicio de autenticación no disponible"}), 500
     
-    # El 'code' viene del request.args (para GET directo de Google) o request.form (para POST de JS)
-    code = request.args.get('code') or request.form.get('code')
+    json_response_obj, status_code = _auth_controller.google_login()
+    return json_response_obj, status_code
 
+@auth_bp.route('/logout', methods=['POST'])
+def logout():
+    """
+    Ruta para cerrar la sesión del usuario.
+    """
+    logger.info("Petición POST recibida en /api/logout")
+    if not _auth_controller:
+        logger.error("AuthController no inicializado.")
+        return jsonify({"message": "Servicio de autenticación no disponible"}), 500
+    
+    json_response_obj, status_code = _auth_controller.logout_user()
+    return json_response_obj, status_code
+
+@auth_bp.route('/session', methods=['GET'])
+def get_session():
+    """
+    Ruta para obtener información de la sesión actual.
+    """
+    logger.info("Petición GET recibida en /api/session")
+    if not _auth_controller:
+        logger.error("AuthController no inicializado.")
+        return jsonify({"message": "Servicio de autenticación no disponible"}), 500
+    
+    json_response_obj, status_code = _auth_controller.get_session_info()
+    return json_response_obj, status_code
+
+@auth_bp.route('/profile/update', methods=['PUT'])
+def update_profile():
+    """
+    Ruta para actualizar el perfil del usuario.
+    Sigue esperando JSON.
+    """
+    logger.info("Petición PUT recibida en /api/profile/update (JSON)")
+    if not _auth_controller:
+        logger.error("AuthController no inicializado.")
+        return jsonify({"message": "Servicio de autenticación no disponible"}), 500
+    
+    json_response_obj, status_code = _auth_controller.update_user_profile()
+    return json_response_obj, status_code
+
+# Oauth Flow (si lo estás usando, también ajustar si es necesario, pero este flujo suele ser de redirección)
+@auth_bp.route('/auth/google-oauth-init') 
+def google_oauth_init():
+    """
+    Inicia el flujo de autorización de Google OAuth 2.0 (NO GSI).
+    """
+    if not _auth_controller:
+        return jsonify({"message": "Servicio de autenticación no disponible"}), 500
+
+    flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
+        _auth_controller.config.GOOGLE_CLIENT_SECRET_FILE,
+        scopes=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile', 'openid'],
+        redirect_uri=_auth_controller.config.GOOGLE_REDIRECT_URI
+    )
+
+    authorization_url, state = flow.authorization_url(
+        access_type='offline',
+        include_granted_scopes='true'
+    )
+    session['oauth_state'] = state
+    return redirect(authorization_url)
+
+@auth_bp.route('/auth/google-oauth-callback')
+def google_oauth_callback():
+    """
+    Maneja el callback de Google OAuth 2.0 (NO GSI).
+    """
+    if not _auth_controller:
+        return jsonify({"message": "Servicio de autenticación no disponible"}), 500
+
+    state = session.pop('oauth_state', None)
+    if not state or state != request.args.get('state'):
+        logger.error("Estado de OAuth inválido o faltante.")
+        return jsonify({"message": "Estado de la solicitud inválido."}), 400
+
+    code = request.args.get('code')
     if not code:
-        logger.warning("No se recibió el código de Google en el callback.")
-        return jsonify({'message': 'No se recibió el código de Google.'}), 400
+        logger.warning("No se recibió el código de autorización de Google.")
+        return jsonify({"message": "Código de autorización no proporcionado."}), 400
 
-    # Pasa el code directamente al controlador
-    user_info = _auth_controller.handle_google_callback(code=code) 
-    
-    if user_info:
-        # Aquí el controlador ya maneja la sesión
-        return jsonify({'message': 'Autenticación con Google exitosa.', 'user': user_info}), 200
+    # === CAMBIO CLAVE AQUÍ: Llama al método del controlador y maneja su resultado ===
+    json_response_obj, status_code = _auth_controller.handle_google_callback(code)
+
+    if status_code == 200 and 'id' in json_response_obj.json: # Acceder al JSON decodificado
+        user = _auth_controller.user_repository.get_user_by_id(json_response_obj.json['id'])
+        if user:
+            session['user_id'] = user.id
+            session['user_name'] = user.name
+            session['user_email'] = user.email
+            logger.info(f"Usuario {user.email} (Google OAuth) inició sesión exitosamente.")
+            return redirect(url_for('productos_page')) 
+        else:
+            return jsonify({"message": "Error en el inicio de sesión de Google (usuario no encontrado)."}), 500
     else:
-        logger.error("Error al procesar el callback de Google en el controlador.")
-        return jsonify({'message': 'Error al procesar el callback de Google'}), 401
-
+        return json_response_obj, status_code # Devuelve el error JSON y el código de estado

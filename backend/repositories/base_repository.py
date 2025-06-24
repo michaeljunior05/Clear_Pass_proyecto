@@ -1,13 +1,10 @@
 # backend/repositories/base_repository.py
 from abc import ABC, abstractmethod
-
-class BaseRepository(ABC):
+class BaseRepository:
     """
-    Clase abstracta base para todos los repositorios en el sistema.
-    Define una interfaz común (contrato) para las operaciones CRUD básicas
-    que cualquier repositorio debe implementar.
+    Clase base abstracta para UserRepository.
     """
-
+    
     @abstractmethod
     def get_all_users(self):
         """

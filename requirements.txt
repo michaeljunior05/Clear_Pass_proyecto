@@ -4,6 +4,9 @@ google-auth-oauthlib
 google-auth
 requests
 cryptography
+pytest 
+pytest-mock
+PyJWT
 #requirements.txt
 #
 # Este archivo lista todas las dependencias de Python necesarias para tu backend Flask.
