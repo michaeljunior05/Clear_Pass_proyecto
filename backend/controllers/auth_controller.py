@@ -1,13 +1,20 @@
+# backend/controllers/auth_controller.py
 import logging
-from typing import Dict, Any, Optional
-import google_auth_oauthlib.flow
-import google.oauth2.credentials
-import requests
-from flask import session, request 
+import os
+import secrets 
+from flask import jsonify, session, request 
+from typing import Optional, Dict, Any, Tuple 
+
 from backend.repositories.user_repository import UserRepository
-from config import Config
-from oauthlib.oauth2.rfc6749 import errors as oauth2_errors 
-from backend.models.user import User
+from backend.models.user import User 
+from config import Config 
+
+# Importar para decodificar JWT de Google (si se usa la simulación)
+try:
+    import jwt
+except ImportError:
+    logger.warning("PyJWT no instalado. Las funciones de Google Login pueden no decodificar JWT correctamente sin validación real.")
+
 
 logger = logging.getLogger(__name__)
 
@@ -17,140 +24,195 @@ class AuthController:
     Maneja el registro, inicio de sesión y la autenticación con Google.
     """
     def __init__(self, user_repository: UserRepository, config: Config):
-        """
-        Inicializa AuthController.
-
-        Args:
-            user_repository (UserRepository): Instancia del repositorio de usuarios.
-            config (Config): Instancia de la configuración de la aplicación.
-        """
-        self.user_repository = user_repository
+        self.user_repo = user_repository
         self.config = config
         self.google_client_id = self.config.GOOGLE_CLIENT_ID
-        self.google_redirect_uri = self.config.GOOGLE_REDIRECT_URI
-        self.google_client_secret_file = self.config.GOOGLE_CLIENT_SECRET_FILE
         logger.info("AuthController inicializado.")
 
-    def register_user(self, email: str, password: str) -> Dict[str, str] | None:
+    def register_user(self, email: str, password: str, name: Optional[str] = None, 
+                      phone_number: Optional[str] = None, dni: Optional[str] = None) -> Tuple[Dict[str, Any], int]:
         """
-        Registra un nuevo usuario en el sistema.
+        Registra un nuevo usuario con email, contraseña y campos opcionales.
+        Recibe los datos directamente como argumentos.
         """
         logger.info(f"Intentando registrar usuario con email: {email}")
-        existing_user = self.user_repository.find_user_by_email(email)
-        if existing_user:
-            logger.warning(f"Intento de registro fallido: el email {email} ya existe.")
-            return {'message': 'El email ya está registrado.'}
+        
+        if not email or not password:
+            logger.warning(f"Faltan campos requeridos en el registro. Email: {email}, Password: {'[presente]' if password else '[ausente]'}.")
+            return jsonify({"message": "Email y contraseña son obligatorios."}), 400
 
-        # MODIFICADO AQUÍ: Crear una instancia de User en lugar de un diccionario
+        if len(password) < 6:
+            logger.warning(f"Intento de registro con contraseña corta para {email}.")
+            return jsonify({"message": "La contraseña debe tener al menos 6 caracteres."}), 400
+
+        # === CAMBIO CLAVE AQUÍ: ELIMINAR 'id=None' ===
         new_user = User(
             email=email,
-            password=password,
-            name=email.split('@')[0] # Usar el prefijo del email como nombre por defecto
+            password=password, 
+            name=name if name else email.split('@')[0], 
+            phone_number=phone_number,
+            dni=dni,
+            is_premium=False 
         )
-        
-        # Pasar el objeto User al repositorio
-        user = self.user_repository.add_user(new_user)
-
-        if user:
-            # Una vez guardado, el objeto user que retorna el repositorio ya tiene el ID, email hasheado/encriptado
-            session['user_id'] = user.id
-            session['user_name'] = user.name
-            session['user_email'] = user.email # El email ya viene desencriptado del repositorio en el User object
-            logger.info(f"Usuario {email} registrado exitosamente con ID: {user.id}")
-            return {'message': 'Registro exitoso. Ahora puedes iniciar sesión.'}
-        else:
-            logger.error(f"Fallo al registrar usuario: {email}")
-            return {'message': 'Error al registrar el usuario.'}
-
-    def login_user(self, email: str, password: str) -> Dict[str, str] | None:
-        """
-        Autentica a un usuario.
-        """
-        logger.info(f"Intentando iniciar sesión con email: {email}")
-        user = self.user_repository.find_user_by_email_and_password(email, password)
-        if user:
-            session['user_id'] = user.id
-            session['user_name'] = user.name
-            session['user_email'] = user.email
-            logger.info(f"Usuario {email} inició sesión exitosamente.")
-            return {'message': 'Inicio de sesión exitoso.'}
-        else:
-            logger.warning(f"Intento de inicio de sesión fallido para el email: {email}")
-            return {'message': 'Email o contraseña incorrectos.'}
-            
-    def handle_google_callback(self, code: str) -> Dict[str, Any] | None: 
-        """
-        Maneja el callback de Google OAuth 2.0.
-        Intercambia el código de autorización por tokens de acceso y obtiene la información del usuario.
-        """
-        logger.info("Procesando callback de Google.")
-        if not code:
-            logger.warning("No se recibió el código de autorización de Google.")
-            return None
+        # === FIN CAMBIO CLAVE ===
 
         try:
-            flow = google_auth_oauthlib.flow.Flow.from_client_secrets_file(
-                self.google_client_secret_file,
-                scopes=['https://www.googleapis.com/auth/userinfo.email', 'https://www.googleapis.com/auth/userinfo.profile', 'openid'],
-                redirect_uri=self.google_redirect_uri 
-            )
-            
-            logger.info(f"Flow object initialized with redirect_uri: {flow.redirect_uri}") 
-            
-            logger.info(f"Intentando fetch_token con code: {code} (sin pasar redirect_uri explícitamente)")
-            flow.fetch_token(code=code) 
-            
-            credentials = flow.credentials
-            
-            userinfo_endpoint = 'https://www.googleapis.com/oauth2/v3/userinfo'
-            response = requests.get(userinfo_endpoint, headers={'Authorization': 'Bearer ' + credentials.token})
-            response.raise_for_status() 
-            user_info = response.json()
+            registered_user = self.user_repo.add_user(new_user)
 
-            google_id = user_info['sub']
-            email = user_info['email']
-            name = user_info.get('name', email.split('@')[0])
-            profile_picture_url = user_info.get('picture')
-
-            user = self.user_repository.find_user_by_google_id(google_id)
-            if not user:
-                # Crear instancia de User para Google OAuth
-                new_user = User(
-                    email=email,
-                    name=name,
-                    profile_picture_url=profile_picture_url,
-                    google_id=google_id
-                )
-                user = self.user_repository.add_user(new_user)
-                logger.info(f"Nuevo usuario de Google registrado: {email}")
+            if registered_user:
+                logger.info(f"Usuario {email} registrado exitosamente. ID: {registered_user.id}")
+                session['user_id'] = registered_user.id
+                session['user_name'] = registered_user.name
+                session['user_email'] = registered_user.email
+                logger.info(f"Sesión iniciada automáticamente para el nuevo usuario {email}.")
+                return jsonify({"message": "Registro exitoso. Ahora puedes navegar por los productos.", "user_id": registered_user.id}), 201
             else:
-                logger.info(f"Usuario de Google existente inició sesión: {email}")
-                # Actualizar datos del usuario existente si es necesario
-                updated_data = {}
-                if user.name != name: updated_data['name'] = name
-                if user.profile_picture_url != profile_picture_url: updated_data['profile_picture_url'] = profile_picture_url
-                if updated_data:
-                    self.user_repository.update_user(user.id, updated_data)
-                    logger.info(f"Datos de usuario de Google actualizados para {email}")
+                logger.warning(f"Fallo en el registro para el email: {email}. Posiblemente ya existe.")
+                return jsonify({"message": "El email ya está registrado o hubo un error."}), 409
+        except Exception as e:
+            logger.error(f"Error inesperado durante el registro de {email}: {e}")
+            return jsonify({"message": "Error interno del servidor durante el registro."}), 500
+
+    def login_user(self, email: str, password: str) -> Tuple[Dict[str, Any], int]:
+        """
+        Inicia sesión a un usuario con email y contraseña.
+        Recibe los datos directamente como argumentos.
+        """
+        logger.info(f"Intentando iniciar sesión con email: {email}")
+        
+        if not email or not password:
+            logger.warning("Faltan campos requeridos en el login (email o password).")
+            return jsonify({"message": "Email y contraseña son obligatorios."}), 400
+
+        user = self.user_repo.find_user_by_email_and_password(email, password)
+
+        if user:
+            session['user_id'] = user.id
+            session['user_name'] = user.name
+            session['user_email'] = user.email 
+            logger.info(f"Usuario {email} ha iniciado sesión exitosamente.")
+            return jsonify({"message": "Inicio de sesión exitoso.", "user_id": user.id}), 200
+        else:
+            logger.warning(f"Intento de inicio de sesión fallido para el email: {email}.")
+            return jsonify({"message": "Credenciales inválidas."}), 401
+
+    def google_login(self) -> Tuple[Dict[str, Any], int]: 
+        """
+        Maneja el inicio de sesión/registro de Google.
+        Espera un JWT (id_token) en el cuerpo JSON.
+        """
+        logger.info("Petición de Google Login recibida.")
+        data = request.json 
+        id_token = data.get('credential') 
+
+        if not id_token:
+            logger.warning("No se recibió el token de credenciales de Google.")
+            return jsonify({"message": "Token de Google no proporcionado."}), 400
+
+        try:
+            decoded_token = jwt.decode(id_token, options={"verify_signature": False})
+            google_email = decoded_token.get('email')
+            google_id = decoded_token.get('sub') 
+            google_name = decoded_token.get('name', google_email)
+
+            if not google_email or not google_id:
+                logger.warning("El token de Google no contiene email o ID de usuario.")
+                return jsonify({"message": "Información de Google incompleta."}), 400
+
+            user = self.user_repo.find_user_by_google_id(google_id)
+            if not user:
+                user = self.user_repo.find_user_by_email(google_email)
+                if user:
+                    logger.info(f"Vincular Google ID a usuario existente con email: {google_email}")
+                    user.google_id = google_id
+                    user = self.user_repo.update_user(user.id, user.to_dict()) 
+                    if not user: 
+                        raise Exception("Fallo al vincular Google ID a usuario existente.")
+                else:
+                    logger.info(f"Registrando nuevo usuario con Google: {google_email}")
+                    new_user = User(
+                        email=google_email, # No se pasa ID aquí tampoco
+                        password=None, 
+                        name=google_name,
+                        google_id=google_id,
+                        is_premium=False
+                    )
+                    user = self.user_repo.add_user(new_user)
 
             if user:
-                return {
-                    'id': user.id,
-                    'email': user.email,
-                    'name': user.name,
-                    'profile_picture_url': user.profile_picture_url
-                }
+                session['user_id'] = user.id
+                session['user_name'] = user.name
+                session['user_email'] = user.email
+                logger.info(f"Usuario {user.email} (Google ID: {user.google_id}) ha iniciado sesión/registrado.")
+                return jsonify({"message": "Inicio de sesión con Google exitoso.", "redirect_url": "/productos"}), 200
             else:
-                logger.error(f"Fallo al guardar/recuperar usuario de Google: {email}")
-                return None
+                logger.error(f"Fallo en el proceso de Google Login para {google_email}.")
+                return jsonify({"message": "Error al procesar el inicio de sesión con Google."}), 500
 
-        except requests.exceptions.RequestException as e:
-            logger.error(f"Error en la petición a Google Userinfo API: {e}", exc_info=True)
-            return None
-        except oauth2_errors.OAuth2Error as e: 
-            logger.error(f"Error de OAuth2 (probablemente redirect_uri_mismatch): {e}", exc_info=True)
-            return None
         except Exception as e:
-            logger.error(f"Error inesperado en handle_google_callback: {e}", exc_info=True)
-            return None
+            logger.error(f"Error inesperado en Google Login: {e}")
+            return jsonify({"message": "Error interno del servidor al procesar Google Login."}), 500
 
+    def logout_user(self) -> Tuple[Dict[str, Any], int]: 
+        """
+        Cierra la sesión del usuario.
+        """
+        session.pop('user_id', None)
+        session.pop('user_name', None)
+        session.pop('user_email', None)
+        logger.info("Usuario ha cerrado sesión.")
+        return jsonify({"message": "Sesión cerrada exitosamente."}), 200
+
+    def get_session_info(self) -> Tuple[Dict[str, Any], int]: 
+        """
+        Devuelve información sobre la sesión actual.
+        """
+        user_id = session.get('user_id')
+        user_name = session.get('user_name')
+        user_email = session.get('user_email')
+        
+        if user_id:
+            user = self.user_repo.get_user_by_id(user_id)
+            if user:
+                is_premium = user.is_premium
+                return jsonify({
+                    "logged_in": True,
+                    "user_id": user_id,
+                    "user_name": user_name,
+                    "user_email": user_email,
+                    "is_premium": is_premium,
+                    "phone_number": user.phone_number, 
+                    "dni": user.dni 
+                }), 200
+            else:
+                session.pop('user_id', None)
+                session.pop('user_name', None)
+                session.pop('user_email', None)
+                logger.warning(f"Usuario con ID {user_id} no encontrado en el repositorio, sesión limpiada.")
+                return jsonify({"logged_in": False, "message": "Sesión inválida."}), 401
+        
+        return jsonify({"logged_in": False}), 200
+
+    def update_user_profile(self) -> Tuple[Dict[str, Any], int]: 
+        """
+        Actualiza el perfil del usuario.
+        """
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"message": "No autenticado."}), 401
+
+        data = request.json
+        if not data:
+            return jsonify({"message": "Datos de actualización no proporcionados."}), 400
+
+        logger.info(f"Intentando actualizar perfil para usuario ID: {user_id} con datos: {data}")
+        updated_user = self.user_repo.update_user(user_id, data)
+
+        if updated_user:
+            session['user_name'] = updated_user.name
+            session['user_email'] = updated_user.email
+            logger.info(f"Perfil del usuario {user_id} actualizado exitosamente.")
+            return jsonify({"message": "Perfil actualizado exitosamente.", "user": updated_user.to_dict()}), 200
+        else:
+            logger.warning(f"Fallo al actualizar el perfil del usuario {user_id}. Posiblemente email duplicado.")
+            return jsonify({"message": "Error al actualizar el perfil. El email podría estar en uso."}), 400

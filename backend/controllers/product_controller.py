@@ -1,90 +1,75 @@
+# backend/controllers/product_controller.py
 import logging
-from typing import List, Dict, Any, Tuple, Optional
+import math
+from typing import List, Optional, Tuple, Dict, Any
+
+from backend.services.external_product_service import ExternalProductService 
 from backend.repositories.product_repository import ProductRepository
-from backend.models.product import Product # Asegurarse de importar Product
-import time 
+from backend.models.product import Product 
 
 logger = logging.getLogger(__name__)
 
+# Mapeo de tus categorías en español a las categorías reales de DummyJSON
+USER_CATEGORY_MAPPING = {
+    "todas las categorias": None, # No hay filtro de categoría para "todas"
+    "telefonos moviles": "smartphones",
+    "camaras digitales": None, # DummyJSON no tiene esta categoría específica
+    "televisores": None, # DummyJSON no tiene esta categoría específica
+    "impresoras": None, # DummyJSON no tiene esta categoría específica
+    "consolas y accesorios": None, # DummyJSON no tiene esta categoría específica
+    "tablets": "laptops", # Las tablets suelen agruparse con laptops en DummyJSON
+    "computadoras": "laptops",
+    "notebooks": "laptops",
+    "electrodomesticos": "home-decoration" # Usamos una categoría genérica si no hay una perfecta
+}
+
+# Puedes definir aquí las categorías que se presentarán al frontend en español
+# Estas son las que tu frontend debería mostrar como opciones
+FRONTEND_DISPLAY_CATEGORIES = list(USER_CATEGORY_MAPPING.keys())
+
 class ProductController:
     """
-    Controlador para la lógica de negocio relacionada con productos.
-    Gestiona la recuperación, filtrado y paginación de productos.
+    Controlador para gestionar la lógica de negocio relacionada con productos.
+    Interactúa con el repositorio de productos para obtener datos.
     """
-    def __init__(self, product_repository: ProductRepository):
-        self.product_repository = product_repository
+    def __init__(self, external_product_service: ExternalProductService):
+        self.product_repository = ProductRepository(external_product_service)
         logger.info("ProductController inicializado.")
 
-    def get_paginated_products(self, query: str = "", category: str = "", page: int = 1, limit: int = 10) -> Tuple[List[Dict[str, Any]], int]:
-        """
-        Recupera productos paginados, aplicando filtros de búsqueda y categoría.
-        """
-        start_time = time.time()
-        logger.info(f"Iniciando get_paginated_products con query='{query}', category='{category}', page={page}, limit={limit}")
-
-        all_products: List[Product] = self.product_repository.get_all_products() # Ahora devuelve objetos Product
-        logger.info(f"Total de productos recuperados del repositorio (antes de filtrar): {len(all_products)}")
-
-        filtered_products = all_products
-
-        # Aplicar filtro por categoría si se proporciona
-        if category:
-            logger.info(f"Aplicando filtro por categoría: {category}")
-            # Accede a 'category' como un atributo del objeto Product
-            filtered_products = [
-                p for p in filtered_products if p.category.lower() == category.lower()
-            ]
-            logger.info(f"Productos después de filtrar por categoría: {len(filtered_products)}")
-
-        # Aplicar filtro de búsqueda si se proporciona (case-insensitive)
-        if query:
-            logger.info(f"Aplicando filtro por query: {query}")
-            query_lower = query.lower()
-            # Accede a 'name' y 'description' como atributos del objeto Product
-            filtered_products = [
-                p for p in filtered_products 
-                if query_lower in p.name.lower() or 
-                   query_lower in p.description.lower()
-            ]
-            logger.info(f"Productos después de filtrar por query: {len(filtered_products)}")
-
-        total_products = len(filtered_products)
-        total_pages = (total_products + limit - 1) // limit
-
-        # Calcular el rango para la paginación
-        start_index = (page - 1) * limit
-        end_index = start_index + limit
-        paginated_products_objs = filtered_products[start_index:end_index]
+    def get_products(self, query: Optional[str] = None, user_category: Optional[str] = None, 
+                     page: int = 1, limit: int = 10) -> Tuple[List[Dict[str, Any]], int]:
+        logger.info(f"Solicitando productos - Query: '{query}', Categoría de Usuario: '{user_category}', Página: {page}, Límite: {limit}")
         
-        # CONVERTIR OBJETOS PRODUCT A DICCIONARIOS ANTES DE DEVOLVER
-        paginated_products = [p.to_dict() for p in paginated_products_objs]
-        
-        end_time = time.time()
-        duration = (end_time - start_time) * 1000
-        logger.info(f"get_paginated_products completado en {duration:.2f} ms. Devolviendo {len(paginated_products)} productos en la página {page}.")
+        # Mapear la categoría de usuario a la categoría de la API de DummyJSON
+        api_category = None
+        if user_category and user_category.lower() in USER_CATEGORY_MAPPING:
+            api_category = USER_CATEGORY_MAPPING[user_category.lower()]
+            logger.info(f"Mapeando categoría de usuario '{user_category}' a API category: '{api_category}'")
+        elif user_category:
+            logger.warning(f"Categoría de usuario '{user_category}' no reconocida, no se aplicará filtro de categoría.")
 
-        return paginated_products, total_pages
+        products_list, total_products = self.product_repository.get_all_products(
+            query=query, category=api_category, page=page, limit=limit
+        )
+
+        total_pages = 0
+        if limit > 0:
+            total_pages = math.ceil(total_products / limit)
+        if total_pages == 0 and len(products_list) > 0:
+            total_pages = 1 # Si hay productos, al menos hay 1 página
+
+        return [product.to_dict() for product in products_list], total_pages
+
+    def get_product_details(self, product_id: str) -> Optional[Dict[str, Any]]:
+        logger.info(f"Solicitando detalle de producto para ID: {product_id}")
+        product = self.product_repository.get_product_by_id(product_id)
+        if product:
+            return product.to_dict()
+        return None
 
     def get_categories(self) -> List[str]:
         """
-        Recupera una lista de todas las categorías únicas de productos.
+        Devuelve la lista de categorías personalizadas en español para el frontend.
         """
-        logger.info("Recuperando categorías únicas de productos.")
-        all_products: List[Product] = self.product_repository.get_all_products() # Devuelve objetos Product
-        # Accede a 'category' como un atributo del objeto Product
-        categories = sorted(list(set(p.category for p in all_products if p.category)))
-        logger.info(f"Categorías únicas encontradas: {len(categories)}")
-        return categories
-
-    def get_product_detail(self, product_id: int) -> Optional[Dict[str, Any]]:
-        """
-        Recupera los detalles de un producto específico por su ID.
-        """
-        logger.info(f"Recuperando detalles para el producto ID: {product_id}")
-        product_obj: Optional[Product] = self.product_repository.get_product_by_id(product_id) # Devuelve objeto Product
-        if product_obj:
-            logger.info(f"Detalles del producto {product_id} encontrados.")
-            return product_obj.to_dict() # CONVERTIR A DICCIONARIO ANTES DE DEVOLVER
-        else:
-            logger.warning(f"Producto con ID {product_id} no encontrado.")
-            return None
+        logger.info("Solicitando categorías de productos personalizadas para el frontend.")
+        return FRONTEND_DISPLAY_CATEGORIES
