@@ -1,73 +1,156 @@
 /* frontend/static/home.css */
 
-/* Estilos globales básicos y reseteos. La mayoría de los estilos para home.html ahora vienen de Tailwind CSS. */
+/* --- Estilos Generales y Reseteo --- */
 body, html {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    font-family: 'Inter', sans-serif; /* Usar la fuente Inter */
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
 }
 
-/* Estilos para el menú hamburguesa en móvil. */
+/* Base para elementos flexibles (si no usas flexbox de Tailwind directamente) */
+/* .flex-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+} */
+
+/* --- Header --- */
+header {
+    /* z-index y otros ya definidos en Tailwind en el HTML */
+}
+
+/* Ajustes para el texto del logo si es necesario, pero Tailwind lo maneja */
+/* header .logo span {
+    color: #000;
+} */
+
+
+/* Search Form dentro del Header (Tailwind lo maneja en el HTML, esto es por si acaso) */
+.search-form {
+    /* Tailwind flex, items-center, rounded-full, etc. */
+}
+
+.search-form input {
+    /* flex-grow, focus:outline-none, text-gray-700, bg-transparent en Tailwind */
+}
+
+.search-form button {
+    /* text-gray-500, hover:text-gray-700, focus:outline-none en Tailwind */
+}
+
+/* Dropdown para Categorías y otros (Manejo con JS y Tailwind `hidden`/`group-hover`) */
+.categories-dropdown-menu,
+#ayuda-dropdown,
+#mi-perfil-dropdown {
+    /* Las propiedades de posicionamiento y visualización se manejan en el HTML con Tailwind y JS */
+}
+
+
+/* --- Product Section --- */
+/* El contenedor principal de la sección de productos tiene estilos en Tailwind en HTML */
+.products-section {
+    /* bg-white rounded-xl shadow-2xl p-6 flex flex-col items-center */
+}
+
+/* Product List / Grid (manejo por Tailwind grid) */
+#product-grid {
+    /* grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 w-full */
+}
+
+/* Product Item / Card */
+.product-card { /* Esta clase se añade en JS para cada tarjeta */
+    /* Tailwind: bg-white rounded-lg shadow-md overflow-hidden flex flex-col border border-gray-200 */
+    /* transiciones para hover: transform transition-transform duration-300 hover:scale-105 cursor-pointer */
+}
+
+/* Ajustes para la imagen dentro de la tarjeta */
+.product-card img {
+    /* w-full h-40 object-contain p-2 */
+}
+
+/* Contenedor del texto de la tarjeta */
+.product-card > div.p-4 {
+    /* p-4 flex flex-col flex-grow */
+}
+
+/* Título del producto en la tarjeta */
+.product-card h3 {
+    /* text-base font-semibold text-gray-800 mb-1 leading-tight */
+}
+
+/* Precio del producto en la tarjeta */
+.product-card p.text-xl {
+    /* text-product-price-color text-xl font-bold mt-auto */
+}
+
+/* Texto de envío gratis */
+.product-card p.text-sm {
+    /* text-shipping-text-color text-sm mb-2 */
+}
+
+/* Descripción del producto en la tarjeta */
+.product-card p.line-clamp-2 {
+    /* text-gray-600 text-sm line-clamp-2 mb-3 */
+}
+
+/* Botón de compra internacional */
+.product-card button {
+    /* bg-buy-btn-bg text-white px-4 py-2 rounded-md font-semibold hover:bg-buy-btn-hover transition duration-200 text-sm */
+}
+
+
+/* Media Queries para responsividad detallada */
+/* Estos deberían estar mayormente manejados por clases responsivas de Tailwind como md:, lg:, etc. */
+/* Si hay overrides necesarios que Tailwind no puede hacer, van aquí */
+
 @media (max-width: 767px) {
+    /* Ajustes específicos para pantallas pequeñas que Tailwind no cubra */
+    header .container {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    header .search-form {
+        width: 100%;
+        margin-top: 1rem;
+    }
     header nav {
-        border-radius: 0 0 0.75rem 0.75rem;
-        position: absolute;
-        top: 6rem; /* Ajustar según la altura real de tu header */
-        left: 0;
+        flex-direction: column;
         width: 100%;
-        background-color: white; /* El menú desplegado en móvil tendrá fondo blanco */
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        padding-bottom: 1rem;
+        margin-top: 1rem;
+        background-color: theme('colors.app-primary-purple'); /* Mantener el color del header */
+        /* Asegurarse de que los enlaces internos de la nav no se vean blancos sobre blanco si el fondo de nav se vuelve blanco */
+    }
+    header nav a, header nav button {
+        width: 100%;
+        text-align: left;
+        padding: 0.5rem 1rem;
+    }
+    header nav .relative.group .absolute { /* Para que los dropdowns se expandan in-line en móvil */
+        position: static;
+        width: 100%;
+        box-shadow: none;
+        background-color: theme('colors.white'); /* Fondo blanco para los items del dropdown en móvil */
+        color: theme('colors.gray.800'); /* Texto oscuro para los items */
+        border-radius: 0;
+        margin-top: 0;
+    }
+    header nav .relative.group .absolute a {
+        padding-left: 2.5rem; /* Indentar los items del dropdown en móvil */
     }
 
-    header nav.active {
+    /* Oculta los elementos de navegación para móvil por defecto y los muestra con JS */
+    #main-nav:not(.active) {
+        display: none;
+    }
+    #main-nav.active {
         display: flex;
-        flex-direction: column;
-        align-items: center;
     }
+}
 
-    header nav ul {
-        flex-direction: column;
-        width: 100%;
-        text-align: center;
-    }
-
-    header nav ul li {
-        width: 100%;
-        padding: 0.5rem 0;
-        border-bottom: 1px solid #eee;
-    }
-
-    header nav ul li:last-child {
-        border-bottom: none;
-    }
-
-    header nav ul li a,
-    header nav ul li span,
-    header nav ul li .nav-button {
-        display: block;
-        padding: 0.5rem 0;
-        width: 100%;
-        color: #4a5568; /* color de texto por defecto para los elementos del menú desplegado */
-    }
-    
-    /* Asegurar que los colores en el menú desplegado sean legibles */
-    header nav ul li a.bg-primary-purple { /* Estilo del botón "Registrarse" en menú móvil */
-        color: white; 
-    }
-
-    /* Ajustes específicos para el formulario de búsqueda en móvil */
-    .search-form {
-        width: 90%;
-        margin: 0.5rem auto;
-        background-color: #f7fafc; /* Fondo para barra de búsqueda en menú móvil */
-    }
-    .search-form input {
-        color: #2d3748; /* Color de texto para input en menú móvil */
-    }
-    .search-form button {
-        color: #a0aec0; /* Color de botón para búsqueda en menú móvil */
-    }
+/* Para pantallas muy pequeñas (ej. móviles pequeños) */
+@media (max-width: 480px) {
+    /* Ajustes más finos si son necesarios */
 }

@@ -10,21 +10,17 @@ from backend.models.product import Product
 logger = logging.getLogger(__name__)
 
 # Mapeo de tus categorías en español a las categorías reales de DummyJSON
+# Nos centraremos en categorías tecnológicas que DummyJSON sí puede filtrar.
+# Las que no tienen un equivalente directo se omiten del dropdown para evitar confusiones.
 USER_CATEGORY_MAPPING = {
     "todas las categorias": None, # No hay filtro de categoría para "todas"
     "telefonos moviles": "smartphones",
-    "camaras digitales": None, # DummyJSON no tiene esta categoría específica
-    "televisores": None, # DummyJSON no tiene esta categoría específica
-    "impresoras": None, # DummyJSON no tiene esta categoría específica
-    "consolas y accesorios": None, # DummyJSON no tiene esta categoría específica
-    "tablets": "laptops", # Las tablets suelen agruparse con laptops en DummyJSON
-    "computadoras": "laptops",
-    "notebooks": "laptops",
-    "electrodomesticos": "home-decoration" # Usamos una categoría genérica si no hay una perfecta
+    "computadoras y laptops": "laptops", # Unifica computadoras, notebooks, tablets
 }
 
-# Puedes definir aquí las categorías que se presentarán al frontend en español
-# Estas son las que tu frontend debería mostrar como opciones
+# Estas son las categorías que se presentarán al frontend en español para el dropdown.
+# Deben corresponder a las claves de USER_CATEGORY_MAPPING.
+# Esta lista será usada por el endpoint /api/categories
 FRONTEND_DISPLAY_CATEGORIES = list(USER_CATEGORY_MAPPING.keys())
 
 class ProductController:
@@ -40,25 +36,30 @@ class ProductController:
                      page: int = 1, limit: int = 10) -> Tuple[List[Dict[str, Any]], int]:
         logger.info(f"Solicitando productos - Query: '{query}', Categoría de Usuario: '{user_category}', Página: {page}, Límite: {limit}")
         
-        # Mapear la categoría de usuario a la categoría de la API de DummyJSON
         api_category = None
         if user_category and user_category.lower() in USER_CATEGORY_MAPPING:
             api_category = USER_CATEGORY_MAPPING[user_category.lower()]
             logger.info(f"Mapeando categoría de usuario '{user_category}' a API category: '{api_category}'")
         elif user_category:
-            logger.warning(f"Categoría de usuario '{user_category}' no reconocida, no se aplicará filtro de categoría.")
+            logger.warning(f"Categoría de usuario '{user_category}' no reconocida en mapeo, no se aplicará filtro de categoría en API.")
 
-        products_list, total_products = self.product_repository.get_all_products(
+        # product_repository.get_all_products ahora devuelve la lista paginada y el total filtrado
+        products_list, total_filtered_products = self.product_repository.get_all_products(
             query=query, category=api_category, page=page, limit=limit
         )
 
         total_pages = 0
         if limit > 0:
-            total_pages = math.ceil(total_products / limit)
-        if total_pages == 0 and len(products_list) > 0:
-            total_pages = 1 # Si hay productos, al menos hay 1 página
+            total_pages = math.ceil(total_filtered_products / limit)
+        
+        # Si hay productos pero total_pages es 0 (ej. total_filtered_products < limit), asegúrate de que sea 1 página.
+        if total_pages == 0 and total_filtered_products > 0:
+            total_pages = 1 
 
-        return [product.to_dict() for product in products_list], total_pages
+        logger.info(f"Total de productos filtrados/encontrados: {total_filtered_products}, Páginas calculadas: {total_pages}")
+        
+        # Devolvemos la lista paginada de productos y el total de productos filtrados (para la paginación del frontend)
+        return [product.to_dict() for product in products_list], total_filtered_products
 
     def get_product_details(self, product_id: str) -> Optional[Dict[str, Any]]:
         logger.info(f"Solicitando detalle de producto para ID: {product_id}")

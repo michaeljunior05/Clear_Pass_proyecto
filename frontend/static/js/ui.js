@@ -1,63 +1,120 @@
 // frontend/static/js/ui.js
 
 /**
- * @file ui.js
- * @description Contiene funciones de utilidad para la interfaz de usuario.
+ * Muestra un mensaje de notificación en la UI.
+ * @param {string} message - El texto del mensaje.
+ * @param {'success' | 'error' | 'info'} type - Tipo de mensaje para aplicar estilos.
  */
-
-/**
- * Muestra un mensaje temporal al usuario en la parte superior de la pantalla.
- * @param {string} message - El texto del mensaje a mostrar.
- * @param {'info' | 'success' | 'error'} type - El tipo de mensaje para aplicar estilos (info, success, error).
- * @param {number} duration - Duración en milisegundos que el mensaje estará visible (por defecto 3000ms).
- */
-export function showMessage(message, type = 'info', duration = 3000) {
-    let messageContainer = document.getElementById('app-message-container');
+export function showMessage(message, type = 'info') {
+    const messageContainer = document.getElementById('message-container');
     if (!messageContainer) {
-        messageContainer = document.createElement('div');
-        messageContainer.id = 'app-message-container';
-        Object.assign(messageContainer.style, {
-            position: 'fixed',
-            top: '20px',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            padding: '15px 25px',
-            borderRadius: '8px',
-            zIndex: '1000',
-            textAlign: 'center',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-            fontSize: '16px',
-            color: '#fff',
-            opacity: '0',
-            transition: 'opacity 0.3s ease-in-out',
-            fontFamily: 'Inter, sans-serif'
-        });
-        document.body.appendChild(messageContainer);
+        const body = document.querySelector('body');
+        const container = document.createElement('div');
+        container.id = 'message-container';
+        container.classList.add('fixed', 'top-4', 'right-4', 'z-50', 'space-y-2');
+        body.appendChild(container);
+        messageContainer = container;
     }
 
-    messageContainer.innerHTML = '';
-    messageContainer.style.opacity = '0'; // Ocultar para resetear la transición
+    const messageElement = document.createElement('div');
+    messageElement.classList.add(
+        'p-3', 'rounded-md', 'shadow-lg', 'text-white', 'text-sm',
+        'flex', 'items-center', 'space-x-2', 'opacity-0', 'transition-opacity', 'duration-300'
+    );
+
+    let bgColor = 'bg-gray-700';
+    let iconClass = 'fas fa-info-circle';
 
     if (type === 'success') {
-        messageContainer.style.backgroundColor = '#4CAF50'; // Verde
+        bgColor = 'bg-green-500';
+        iconClass = 'fas fa-check-circle';
     } else if (type === 'error') {
-        messageContainer.style.backgroundColor = '#f44336'; // Rojo
-    } else {
-        messageContainer.style.backgroundColor = '#2196F3'; // Azul (info)
+        bgColor = 'bg-red-500';
+        iconClass = 'fas fa-times-circle';
     }
 
-    messageContainer.textContent = message;
-    // Pequeño retardo para asegurar que la transición de opacidad funcione al reaparecer
-    setTimeout(() => {
-        messageContainer.style.opacity = '1';
-    }, 50);
+    messageElement.classList.add(bgColor);
+    messageElement.innerHTML = `<i class="${iconClass}"></i><span>${message}</span>`;
+
+    messageContainer.appendChild(messageElement);
 
     setTimeout(() => {
-        messageContainer.style.opacity = '0';
-        setTimeout(() => {
-            if (messageContainer.parentNode) {
-                messageContainer.parentNode.removeChild(messageContainer);
-            }
-        }, 300); // Debe coincidir con la duración de la transición de opacidad a 0
-    }, duration);
+        messageElement.classList.remove('opacity-0');
+        messageElement.classList.add('opacity-100');
+    }, 10); 
+
+    setTimeout(() => {
+        messageElement.classList.remove('opacity-100');
+        messageElement.classList.add('opacity-0');
+        messageElement.addEventListener('transitionend', () => messageElement.remove());
+    }, 5000); 
 }
+
+// Lógica para los dropdowns del header
+document.addEventListener('DOMContentLoaded', () => {
+    // Función genérica para manejar el toggle de dropdowns
+    const setupDropdown = (buttonId, dropdownId) => {
+        const button = document.getElementById(buttonId);
+        const dropdown = document.getElementById(dropdownId);
+
+        if (button && dropdown) {
+            // Manejar clic para mostrar/ocultar
+            button.addEventListener('click', (event) => {
+                event.stopPropagation(); // Evitar que el clic cierre inmediatamente
+                dropdown.classList.toggle('hidden');
+            });
+
+            // Cerrar el dropdown si se hace clic fuera de él o de su botón
+            document.addEventListener('click', (event) => {
+                if (!dropdown.contains(event.target) && !button.contains(event.target)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+
+            // Para desktops, también permitir hover (opcional, pero común)
+            button.addEventListener('mouseenter', () => dropdown.classList.remove('hidden'));
+            button.addEventListener('mouseleave', (event) => {
+                // Solo ocultar si el mouse no está sobre el dropdown mismo
+                if (!dropdown.contains(event.relatedTarget)) {
+                    dropdown.classList.add('hidden');
+                }
+            });
+            dropdown.addEventListener('mouseleave', () => dropdown.classList.add('hidden'));
+
+        }
+    };
+
+    // Configurar cada dropdown
+    setupDropdown('categorias-btn', 'categorias-dropdown');
+    setupDropdown('ayuda-btn', 'ayuda-dropdown');
+    setupDropdown('mi-perfil-btn', 'mi-perfil-dropdown');
+
+    // Lógica específica para el tooltip del carrito (solo al pasar el ratón)
+    const cartIcon = document.getElementById('cart-icon');
+    const cartTooltip = document.getElementById('cart-tooltip');
+    if (cartIcon && cartTooltip) {
+        cartIcon.addEventListener('mouseenter', () => {
+            cartTooltip.classList.remove('hidden');
+        });
+        cartIcon.addEventListener('mouseleave', () => {
+            cartTooltip.classList.add('hidden');
+        });
+    }
+
+    // Lógica para el botón de menú hamburguesa en móviles
+    const menuButton = document.getElementById('menu-button');
+    const mainNav = document.getElementById('main-nav');
+    if (menuButton && mainNav) {
+        menuButton.addEventListener('click', () => {
+            mainNav.classList.toggle('hidden');
+            mainNav.classList.toggle('active'); // Usa esta clase si tienes transiciones CSS para móviles
+        });
+        // Cerrar el menú si se hace clic fuera en móvil (solo si el menú está visible)
+        document.addEventListener('click', (event) => {
+            if (!mainNav.contains(event.target) && !menuButton.contains(event.target) && !mainNav.classList.contains('hidden')) {
+                mainNav.classList.add('hidden');
+                mainNav.classList.remove('active');
+            }
+        });
+    }
+});

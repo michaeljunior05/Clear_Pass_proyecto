@@ -4,45 +4,41 @@
  * @file auth.js
  * @description Centraliza la lógica de autenticación (login, registro, Google Sign-In).
  */
+// frontend/static/js/auth.js
 
-import { showMessage } from './ui.js'; // Importar la función showMessage
+import { showMessage } from './ui.js';
+
+const API_BASE_URL = '/api'; // Asegúrate de que esto coincida con tus rutas de Flask
 
 /**
- * Función para manejar la respuesta de credenciales de Google.
- * Esta función es un callback invocado directamente por la librería GSI (desde data-callback).
- * Recibe un objeto de respuesta que contiene el ID token JWT.
- * ¡IMPORTANTE! Debe ser accesible globalmente (ej. window.handleCredentialResponse)
+ * Maneja la respuesta de Google One Tap o Google Sign-In button.
+ * @param {Object} response - Objeto de respuesta de Google con el ID token.
  */
 window.handleCredentialResponse = async (response) => {
-    console.log("Respuesta de credenciales de Google recibida:", response);
-    const idToken = response.credential; // Este es el JWT que necesitas enviar al backend
-
-    if (idToken) {
-        console.log("Enviando ID token de Google a /api/auth/google-login...");
+    if (response.credential) {
+        console.log("ID Token recibido de Google:", response.credential);
         try {
-            // Asegúrate de que tu backend tenga una ruta /api/auth/google-login que espere un POST con JSON
-            const fetchResponse = await fetch('/api/auth/google-login', {
+            const res = await fetch(`${API_BASE_URL}/google-login`, {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ id_token: idToken }),
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ token: response.credential }),
             });
-            const data = await fetchResponse.json();
 
-            if (fetchResponse.ok) {
-                showMessage('Inicio de sesión con Google exitoso. Redirigiendo...', 'success');
-                console.log('Inicio de sesión con Google exitoso (backend response):', data);
-                window.location.href = data.redirect_url || '/productos';
+            const data = await res.json();
+
+            if (res.ok) {
+                showMessage(data.message, 'success');
+                // Redirigir a la página de productos o dashboard después del login exitoso
+                window.location.href = '/productos'; 
             } else {
-                showMessage(data.message || 'Error al iniciar sesión con Google', 'error');
-                console.error('Error en el inicio de sesión con Google (backend error):', data);
+                showMessage(data.message || 'Error en la autenticación con Google.', 'error');
             }
         } catch (error) {
-            console.error('Error de red al intentar enviar el token de Google al backend:', error);
-            showMessage('Error de red al intentar iniciar sesión con Google', 'error');
+            console.error('Error durante la autenticación con Google:', error);
+            showMessage('Error de conexión o autenticación con Google.', 'error');
         }
-    } else {
-        console.error("No se recibió el ID token de Google. Respuesta:", response);
-        showMessage('Error al iniciar sesión con Google: No se obtuvo el token.', 'error');
     }
 };
 
