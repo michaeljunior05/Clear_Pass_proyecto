@@ -126,7 +126,7 @@ def create_app():
         logged_in = 'user_id' in session
         user_name = session.get('user_name', 'Usuario')
         initial_search_query = request.args.get('query', '')
-        return render_template('productos.html', 
+        return render_template('products.html', 
                                 logged_in=logged_in, 
                                 user_name=user_name, 
                                 initial_search_query=initial_search_query) 

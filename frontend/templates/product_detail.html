@@ -1,0 +1,156 @@
+<!-- frontend/templates/product_detail.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Pass - Detalle de Producto</title>
+    
+    {# Favicon #}
+    <link rel="icon" href="{{ url_for('static', filename='images/clear_logo.png') }}" type="image/png">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], 
+                    },
+                    colors: {
+                        'app-primary-purple': '#635BFF', 
+                        'app-primary-purple-hover': '#7A72FF',
+                        'app-title-color': '#6479FF', 
+                        'app-input-bg': '#E4E4E9', 
+                        'app-button-bg': '#A299F7', 
+                        'app-button-hover': '#B8B3F9',
+                        'product-card-border': '#E0E0E0', 
+                        'product-price-color': '#1a202c', 
+                        'shipping-text-color': '#10B981', 
+                        'international-buy-btn-bg': '#8D9CFF', 
+                        'international-buy-btn-hover': '#7A8CFF', 
+                        'importer-profile-bg': '#F3F4F6', // Un gris claro para el fondo del perfil de importador
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- CSS personalizado -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+</head>
+<body class="font-sans bg-gray-100 min-h-screen flex flex-col">
+
+    {# Header (Idéntico al de products.html) #}
+    <header class="bg-app-primary-purple p-4 shadow-md z-20">
+        <div class="container mx-auto flex justify-between items-center flex-wrap">
+            <a href="/" class="flex items-center space-x-2 text-white text-2xl font-bold">
+                <span>Clear</span><i class="fas fa-check-circle text-white text-3xl mx-1"></i><span>Pass</span>
+            </a>
+
+            <button id="menu-button" class="text-white text-3xl md:hidden focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            <nav id="main-nav" class="hidden md:flex md:items-center w-full md:w-auto mt-4 md:mt-0 space-y-2 md:space-y-0 md:space-x-6 text-lg">
+                <div class="relative group">
+                    <button id="categorias-btn" class="flex items-center space-x-1 text-white hover:text-gray-200 transition duration-200 py-1 focus:outline-none">
+                        <span>Categorías</span>
+                        <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-200 group-hover:rotate-180"></i>
+                    </button>
+                    <div id="categorias-dropdown" class="absolute hidden bg-white text-gray-800 rounded-md shadow-lg py-2 mt-2 w-48 z-30">
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="todas las categorias">Todas las categorías</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="telefonos moviles">Teléfonos móviles</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="camaras digitales">Cámaras digitales</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="televisores">Televisores</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="impresoras">Impresoras</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="consolas y accesorios">Consolas y accesorios</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="tablets">Tablets</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="computadoras">Computadoras</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="notebooks">Notebooks</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100" data-category="electrodomesticos">Electrodomésticos</a>
+                    </div>
+                </div>
+
+                <div class="search-form flex items-center w-64 bg-white rounded-full px-4 py-2 shadow-sm">
+                    <input type="text" id="search-input" name="query" placeholder="Buscar producto, importador, ..." 
+                           class="flex-grow focus:outline-none text-gray-700 bg-transparent">
+                    <button type="submit" id="search-button" class="text-gray-500 hover:text-gray-700 focus:outline-none ml-2">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
+                <a href="#" id="cart-icon" class="relative group flex items-center space-x-1 text-white hover:text-gray-200">
+                    <i class="fas fa-shopping-cart text-xl"></i>
+                    <span class="text-lg">Carrito</span>
+                    <span id="cart-tooltip" class="absolute hidden bg-gray-700 text-white text-xs rounded py-1 px-2 -top-6 left-1/2 -translate-x-1/2 transform whitespace-nowrap">Agrega productos al carrito</span>
+                </a>
+                
+                <div class="relative group">
+                    <button id="ayuda-btn" class="flex items-center space-x-1 text-white hover:text-gray-200 transition duration-200 py-1 focus:outline-none">
+                        <span>Ayuda</span>
+                        <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-200 group-hover:rotate-180"></i>
+                    </button>
+                    <div id="ayuda-dropdown" class="absolute hidden bg-white text-gray-800 rounded-md shadow-lg py-2 mt-2 w-56 right-0 z-30">
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100">Administrar y cancelar compras</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100">Devoluciones y reembolsos</a>
+                        <a href="/faq" class="block px-4 py-2 hover:bg-gray-100">Preguntas frecuentes</a>
+                    </div>
+                </div>
+                
+                <a href="/" class="flex items-center space-x-1 text-white hover:text-gray-200">
+                    <span class="text-lg">Inicio</span>
+                </a>
+                
+                <div class="relative group">
+                    <button id="mi-perfil-btn" class="flex items-center space-x-1 text-white hover:text-gray-200 transition duration-200 py-1 focus:outline-none">
+                        <i class="fas fa-user-circle text-xl"></i>
+                        <span class="text-lg">Mi perfil</span>
+                        <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-200 group-hover:rotate-180"></i>
+                    </button>
+                    <div id="mi-perfil-dropdown" class="absolute hidden bg-white text-gray-800 rounded-md shadow-lg py-2 mt-2 w-48 right-0 z-30">
+                        <a href="/perfil" class="block px-4 py-2 hover:bg-gray-100">Usuario</a> 
+                        <a href="/purchases" class="block px-4 py-2 hover:bg-gray-100">Compras</a>
+                        <a href="/history" class="block px-4 py-2 hover:bg-gray-100">Historial</a>
+                        <a href="/faq" class="block px-4 py-2 hover:bg-gray-100">Preguntas</a>
+                        <a href="/credits" class="block px-4 py-2 hover:bg-gray-100">Créditos</a>
+                        <a href="/logout" class="block px-4 py-2 hover:bg-gray-100">Salir</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    {# Mensajes de la aplicación (para showMessage) #}
+    <div id="message-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    {# CONTENIDO PRINCIPAL - Detalle del Producto #}
+    <main class="flex-1 flex flex-col p-6 md:p-8 bg-gray-100">
+        <div class="w-full max-w-6xl mx-auto mb-6 flex justify-between items-center">
+            <h2 class="text-app-title-color font-semibold text-lg uppercase">PERFIL DEL IMPORTADOR</h2>
+            <button id="volver-button" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-300 transition duration-200">VOLVER</button>
+        </div>
+        
+        <div id="detail-loading-indicator" class="text-center text-app-primary-purple text-lg font-semibold py-8 hidden">
+            Cargando detalles del producto...
+        </div>
+        <div id="product-detail-container" class="w-full">
+            {# Los detalles del producto se inyectarán aquí por JavaScript #}
+        </div>
+    </main>
+
+    {# Footer #}
+    <footer class="bg-app-primary-purple p-4 text-white text-center mt-auto shadow-inner">
+        <p>&copy; 2025 Clear Pass. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Módulos JS -->
+    <script type="module" src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/products.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script> 
+</body>
+</html>

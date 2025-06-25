@@ -1,0 +1,173 @@
+<!-- frontend/templates/products.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Pass - Productos</title>
+    
+    {# Favicon #}
+    <link rel="icon" href="{{ url_for('static', filename='images/clear_logo.png') }}" type="image/png">
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'], 
+                    },
+                    colors: {
+                        'app-primary-purple': '#635BFF', 
+                        'app-primary-purple-hover': '#7A72FF', 
+                        'app-input-bg': '#E4E4E9', 
+                        'app-button-bg': '#A299F7', 
+                        'app-button-hover': '#B8B3F9',
+                        'product-card-border': '#E0E0E0', 
+                        'product-price-color': '#1a202c', 
+                        'shipping-text-color': '#10B981', 
+                        'international-buy-btn-bg': '#8D9CFF', 
+                        'international-buy-btn-hover': '#7A8CFF', 
+
+                        'header-link-text': '#1F2937', 
+                        'header-icon-color': '#4B5563', 
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Tu CSS consolidado (home.css o products.css) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='home.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body class="font-sans bg-gray-bg min-h-screen flex flex-col"
+      style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-size: cover; background-position: center; background-attachment: fixed;">
+
+    {# Header #}
+    <header class="bg-transparent p-4 shadow-md z-20">
+        <div class="container mx-auto flex justify-between items-center flex-wrap">
+            {# Logo Clear Pass #}
+            <a href="/" class="flex items-center space-x-2 text-header-link-text text-2xl font-bold">
+                <img src="{{ url_for('static', filename='images/clear_logo.png') }}" alt="Clear Pass Logo" class="h-8">
+                <span>Clear Pass</span>
+            </a>
+
+            {# Botón de Menú Hamburguesa para Móviles #}
+            <button id="menu-button" class="text-header-link-text text-3xl md:hidden focus:outline-none">
+                <i class="fas fa-bars"></i>
+            </button>
+
+            {# Menú de Navegación y Búsqueda #}
+            <nav id="main-nav" class="hidden md:flex md:items-center w-full md:w-auto mt-4 md:mt-0 space-y-2 md:space-y-0 md:space-x-6 text-lg">
+                {# 1. Categorías Dropdown #}
+                <div class="relative"> 
+                    <button id="categorias-btn" class="flex items-center space-x-1 text-header-link-text hover:text-gray-600 transition duration-200 py-1 focus:outline-none font-semibold">
+                        <span>Categorías</span>
+                        <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-200"></i>
+                    </button>
+                    <div id="categorias-dropdown" class="absolute hidden bg-white text-gray-800 rounded-md shadow-lg py-2 mt-2 w-48 z-30 right-0 md:left-0">
+                        {# Las categorías se inyectarán aquí por JavaScript - ESTE DIV DEBE ESTAR VACÍO EN EL HTML #}
+                    </div>
+                </div>
+
+                {# 2. Barra de búsqueda #}
+                <div class="search-form flex items-center w-64 bg-white rounded-full px-4 py-2 shadow-sm">
+                    <input type="text" id="search-input" name="query" placeholder="Buscar producto, importador, ..." 
+                           class="flex-grow focus:outline-none text-gray-700 bg-transparent" value="{{ initial_search_query or '' }}">
+                    <button type="submit" id="search-button" class="text-header-icon-color hover:text-gray-900 focus:outline-none ml-2">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+
+                {# 3. Carrito con Tooltip #}
+                <a href="#" id="cart-icon" class="relative flex items-center space-x-1 text-header-link-text hover:text-gray-600 transition duration-200">
+                    <i class="fas fa-shopping-cart text-xl text-header-icon-color"></i>
+                    <span class="text-lg font-semibold">Carrito</span>
+                    <span id="cart-tooltip" class="absolute hidden bg-gray-700 text-white text-xs rounded py-1 px-2 -top-6 left-1/2 -translate-x-1/2 transform whitespace-nowrap">Agregá productos al carrito</span>
+                </a>
+                
+                {# 4. Ayuda Dropdown #}
+                <div class="relative"> 
+                    <button id="ayuda-btn" class="flex items-center space-x-1 text-header-link-text hover:text-gray-600 transition duration-200 py-1 focus:outline-none font-semibold">
+                        <span>Ayuda</span>
+                        <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-200"></i>
+                    </button>
+                    <div id="ayuda-dropdown" class="absolute hidden bg-white text-gray-800 rounded-md shadow-lg py-2 mt-2 w-56 right-0 z-30">
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100">Administrar y cancelar compras</a>
+                        <a href="#" class="block px-4 py-2 hover:bg-gray-100">Devoluciones y reembolsos</a>
+                        <a href="/faq" class="block px-4 py-2 hover:bg-gray-100">Preguntas frecuentes</a>
+                    </div>
+                </div>
+                
+                {# 5. Inicio #}
+                <a href="/" class="flex items-center space-x-1 text-header-link-text hover:text-gray-600 transition duration-200 font-semibold">
+                    <span class="text-lg">Inicio</span>
+                </a>
+                
+                {# 6. Mi Perfil Dropdown #}
+                <div class="relative"> 
+                    <button id="mi-perfil-btn" class="flex items-center space-x-1 text-header-link-text hover:text-gray-600 transition duration-200 py-1 focus:outline-none font-semibold">
+                        <i class="fas fa-user-circle text-xl text-header-icon-color"></i>
+                        <span class="text-lg">Mi perfil</span>
+                        <i class="fas fa-chevron-down ml-2 text-sm transition-transform duration-200"></i>
+                    </button>
+                    <div id="mi-perfil-dropdown" class="absolute hidden bg-white text-gray-800 rounded-md shadow-lg py-2 mt-2 w-48 right-0 z-30">
+                        <a href="/perfil" class="block px-4 py-2 hover:bg-gray-100">Usuario</a> 
+                        <a href="/purchases" class="block px-4 py-2 hover:bg-gray-100">Compras</a>
+                        <a href="/history" class="block px-4 py-2 hover:bg-gray-100">Historial</a>
+                        <a href="/faq" class="block px-4 py-2 hover:bg-gray-100">Preguntas</a>
+                        <a href="/credits" class="block px-4 py-2 hover:bg-gray-100">Créditos</a>
+                        <a href="/logout" class="block px-4 py-2 hover:bg-gray-100">Salir</a>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    {# Mensajes de la aplicación (para showMessage) #}
+    <div id="message-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
+    {# CONTENIDO PRINCIPAL #}
+    <main class="flex-1 flex flex-col items-center justify-center py-8 px-4 md:px-8">
+        <h1 class="text-white text-4xl md:text-5xl font-bold mb-2 drop-shadow-lg text-center">Bienvenido</h1>
+        <p class="text-white text-lg md:text-xl mb-8 drop-shadow-md text-center">Aquí podrás ver todos los productos tecnológicos disponibles para importar.</p>
+
+        {# Contenedor de Productos #}
+        <section class="w-full max-w-6xl bg-product-card-bg rounded-xl shadow-2xl p-6 flex flex-col items-center">
+            {# Indicador de carga para productos - visible por defecto #}
+            <div id="loading-indicator" class="text-center text-app-primary-purple text-lg font-semibold py-4">
+                Cargando productos...
+            </div>
+
+            {# Contenedor donde se insertarán las tarjetas de productos #}
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 w-full">
+                {# Las tarjetas de producto se inyectarán aquí por JavaScript #}
+            </div>
+
+            {# Controles de paginación - oculto por defecto #}
+            <div id="pagination-controls" class="flex items-center space-x-3 mt-8 hidden">
+                <button id="prev-page-btn" class="bg-app-button-bg text-white px-4 py-2 rounded-md hover:bg-app-button-hover transition duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">Atrás</button>
+                <div id="pagination-numbers" class="flex space-x-2">
+                    {# Los números de página se inyectarán aquí por JavaScript #}
+                </div>
+                <button id="next-page-btn" class="bg-app-button-bg text-white px-4 py-2 rounded-md hover:bg-app-button-hover transition duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed">Siguiente</button>
+            </div>
+        </section>
+    </main>
+
+    {# Footer #}
+    <footer class="bg-transparent p-4 text-header-link-text text-center mt-auto shadow-inner">
+        <p>&copy; 2025 Clear Pass. Todos los derechos reservados.</p>
+    </footer>
+
+    <!-- Módulos JS -->
+    <script type="module" src="{{ url_for('static', filename='js/ui.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/products.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script> 
+</body>
+</html>

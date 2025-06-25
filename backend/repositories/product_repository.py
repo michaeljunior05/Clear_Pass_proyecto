@@ -1,102 +1,135 @@
 # backend/repositories/product_repository.py
 import logging
 from typing import List, Optional, Dict, Any, Tuple
-from datetime import datetime, timedelta
-
-from backend.services.external_product_service import ExternalProductService 
 from backend.models.product import Product
+from backend.services.external_product_service import ExternalProductService
 
 logger = logging.getLogger(__name__)
 
-# NOTA IMPORTANTE: Esta clase ya NO hereda de BaseRepository
-class ProductRepository: 
+class ProductRepository:
     """
-    Gestiona la persistencia y acceso a los datos de productos, incluyendo
-    una caché en memoria y la interacción con la API de productos externa única (DummyJSON).
+    Repositorio que maneja el almacenamiento y la recuperación de productos.
+    Actúa como una capa de abstracción entre la fuente de datos externa 
+    y el resto de la aplicación, incluyendo un caché para los datos.
     """
     def __init__(self, external_product_service: ExternalProductService):
-        # No se llama a super().__init__() porque no hereda de BaseRepository,
-        # solo se inicializa object directamente si no hay otra herencia.
         self.external_product_service = external_product_service
-        self._cache: Dict[str, Dict[str, Any]] = {}
-        self._cache_timestamp: Dict[str, datetime] = {}
-        self.cache_duration = timedelta(minutes=5)
-        # self.entity_type = "products" # No es estrictamente necesario aquí si no usa JSONStorage para productos
+        # Caché para almacenar todos los productos obtenidos de la API externa
+        # Se guarda como un diccionario para fácil acceso por ID
+        self._cache: Dict[str, Product] = {}
+        # Lista completa de productos para facilitar la paginación y filtros
+        self._all_products_list: List[Product] = [] 
+        # Almacena el total de productos reportado por la API externa
+        self._total_products_from_api: int = 0
+        self._cache_is_loaded = False
         logger.info("ProductRepository inicializado.")
 
-    def _get_cache_key(self, query: Optional[str] = None, category: Optional[str] = None, 
-                       page: int = 1, limit: int = 10) -> str:
-        query_str = query if query is not None else ""
-        category_str = category if category is not None else ""
-        return f"products_q{query_str}_cat{category_str}_p{page}_l{limit}"
+    def _load_cache(self) -> None:
+        """
+        Carga todos los productos desde el servicio externo al caché.
+        Esta operación solo debería realizarse una vez o cuando los datos necesiten ser refrescados.
+        """
+        if self._cache_is_loaded and self._all_products_list: # Solo cargar si no está cargado o si la lista está vacía
+            return
+
+        logger.info("Cargando todos los productos desde la API externa al caché...")
+        # El servicio externo ahora se encarga de realizar múltiples llamadas
+        # para obtener todos los productos base. Se pide un límite alto para asegurar la recolección inicial.
+        all_products_data, total_from_api = self.external_product_service.get_all_products(limit=100) # Un limit=100 a la API base debería traer la primera tanda completa. El servicio luego hace más si es necesario.
+        
+        self._cache = {}
+        self._all_products_list = []
+        for product_data in all_products_data:
+            try:
+                product = Product.from_dict(product_data)
+                self._cache[product.id] = product
+                self._all_products_list.append(product)
+            except Exception as e:
+                logger.error(f"Error al procesar producto {product_data.get('id')}: {e}")
+        
+        self._total_products_from_api = total_from_api 
+        self._cache_is_loaded = True
+        logger.info(f"Caché de productos cargado. Total de productos en caché: {len(self._all_products_list)}.")
+        logger.info(f"Total reportado por la API externa: {self._total_products_from_api}.")
+
 
     def get_all_products(self, query: Optional[str] = None, category: Optional[str] = None, 
-                         page: int = 1, limit: int = 10) -> Tuple[List[Product], int]:
-        cache_key = self._get_cache_key(query, category, page, limit)
-
-        if cache_key in self._cache and (datetime.now() - self._cache_timestamp[cache_key]) < self.cache_duration:
-            logger.info(f"Devolviendo productos desde caché para clave: {cache_key}")
-            cached_data = self._cache[cache_key]
-            return list(cached_data['products']), cached_data['total_products']
-
-        logger.info(f"Obteniendo productos de la API externa (DummyJSON) para clave: {cache_key}")
+                             page: int = 1, limit: int = 10) -> Tuple[List[Product], int]:
+        """
+        Obtiene productos paginados, aplicando filtros de búsqueda y categoría.
+        La paginación se realiza localmente sobre la lista completa de productos en caché.
         
-        skip = (page - 1) * limit
+        Args:
+            query (str, optional): Término de búsqueda.
+            category (str, optional): Categoría a filtrar (en formato DummyJSON).
+            page (int): Número de página (base 1).
+            limit (int): Cantidad de productos por página.
+
+        Returns:
+            Tuple[List[Product], int]: Una tupla con la lista de objetos Product para la página actual
+                                        y el total de productos *filtrados* disponibles.
+        """
+        self._load_cache() # Asegura que el caché esté cargado
+
+        filtered_products: List[Product] = []
+
+        # Aplicar filtros
+        for product in self._all_products_list:
+            matches_query = True
+            matches_category = True
+
+            if query:
+                # Búsqueda insensible a mayúsculas y minúsculas en nombre y descripción
+                if not (query.lower() in product.name.lower() or 
+                        (product.description and query.lower() in product.description.lower())):
+                    matches_query = False
+
+            if category and category.lower() != "todas las categorias": # Asegurarse de no filtrar si es "todas"
+                # Filtrar por categoría
+                if product.category.lower() != category.lower():
+                    matches_category = False
+            
+            if matches_query and matches_category:
+                filtered_products.append(product)
         
-        products_data_raw, total_products = self.external_product_service.get_all_products(
-            query=query, category=category, limit=limit, skip=skip
-        )
+        total_filtered_products = len(filtered_products) # Total después de aplicar los filtros
 
-        if not products_data_raw: 
-            logger.warning("No se pudieron obtener productos de la API externa o la lista está vacía.")
-            return [], 0
+        # Aplicar paginación LOCALMENTE sobre la lista filtrada
+        start_index = (page - 1) * limit
+        end_index = start_index + limit
+        
+        # Asegurarse de que los índices no se salgan de los límites de la lista
+        paginated_products = filtered_products[start_index:end_index]
 
-        products = [Product.from_dict(item) for item in products_data_raw]
+        logger.info(f"Repositorio: Total filtrados: {total_filtered_products}, Paginación (start: {start_index}, end: {end_index}), Productos devueltos: {len(paginated_products)}")
 
-        self._cache[cache_key] = {'products': products, 'total_products': total_products}
-        self._cache_timestamp[cache_key] = datetime.now()
-        logger.info(f"Productos guardados en caché para clave: {cache_key}")
-
-        return products, total_products
+        return paginated_products, total_filtered_products # Devolver la lista paginada y el total filtrado
 
     def get_product_by_id(self, product_id: str) -> Optional[Product]:
-        cache_key = f"product_detail_{product_id}"
+        """
+        Obtiene un producto por su ID.
+        Si el producto no está en caché, intenta obtenerlo directamente del servicio externo.
+        """
+        self._load_cache() # Asegura que el caché esté cargado
 
-        if cache_key in self._cache and (datetime.now() - self._cache_timestamp[cache_key]) < self.cache_duration:
-            logger.info(f"Devolviendo detalle de producto desde caché para ID: {product_id}")
-            return self._cache[cache_key]
-
-        logger.info(f"Obteniendo detalle de producto de la API externa para ID: {product_id}")
-        product_data_raw = self.external_product_service.get_product_by_id(product_id)
-
-        if product_data_raw is None:
-            logger.warning(f"Producto con ID {product_id} no encontrado en la API externa.")
-            return None
+        product = self._cache.get(product_id)
+        if product:
+            logger.info(f"Producto {product_id} encontrado en caché.")
+            return product
         
-        product = Product.from_dict(product_data_raw)
-        
-        self._cache[cache_key] = product
-        self._cache_timestamp[cache_key] = datetime.now()
-        logger.info(f"Detalle de producto guardado en caché para ID: {product_id}")
+        # Si no está en caché, intentar obtenerlo del servicio externo directamente
+        logger.info(f"Producto {product_id} no encontrado en caché, intentando obtener del servicio externo.")
+        product_data = self.external_product_service.get_product_by_id(product_id)
+        if product_data:
+            try:
+                product = Product.from_dict(product_data)
+                self._cache[product.id] = product
+                self._all_products_list.append(product) # Añadirlo a la lista completa también
+                logger.info(f"Producto {product_id} obtenido del servicio externo y añadido al caché.")
+                return product
+            except Exception as e:
+                logger.error(f"Error al procesar producto {product_id} obtenido del servicio externo: {e}")
+                return None
+        logger.warning(f"Producto con ID {product_id} no encontrado ni en caché ni en servicio externo.")
+        return None
 
-        return product
-
-    def get_categories(self) -> List[str]:
-        cache_key = "product_categories_dummyjson" 
-
-        if cache_key in self._cache and (datetime.now() - self._cache_timestamp[cache_key]) < self.cache_duration:
-            logger.info("Devolviendo categorías de DummyJSON desde caché.")
-            return list(self._cache[cache_key])
-
-        logger.info("Obteniendo categorías de la API externa (DummyJSON).")
-        categories = self.external_product_service.get_categories()
-
-        if categories is None:
-            logger.error("No se pudieron obtener categorías de DummyJSON.")
-            return []
-        
-        self._cache[cache_key] = categories
-        self._cache_timestamp[cache_key] = datetime.now()
-        logger.info("Categorías de DummyJSON guardadas en caché.")
-
-        return categories
