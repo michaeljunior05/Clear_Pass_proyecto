@@ -9,6 +9,26 @@ body, html {
     -moz-osx-font-smoothing: grayscale;
 }
 
+/* Ocultar el div de g_id_onload y elementos relacionados con el prompt One Tap de Google */
+#g_id_onload, 
+.g_id_signin[data-auto_prompt="true"], /* Oculta el botón si auto_prompt está activo */
+.g_id_container, /* Contenedor principal del prompt de Google */
+.g_id_wrapper, 
+.g_id_dialog, 
+.g_id_iframe,
+iframe[src*="accounts.google.com/gsi/iframe/web"] { /* Selector más genérico para el iframe del prompt */
+    display: none !important;
+    visibility: hidden !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position: absolute !important;
+    top: -9999px !important; 
+    left: -9999px !important;
+    pointer-events: none !important; /* Asegura que no sea interactivo si se llega a superponer */
+}
+
+
 /* Estilos para la división principal en escritorio (dos columnas) */
 .w-full.h-screen.flex {
     flex-direction: row; /* Por defecto en escritorio es fila */
@@ -27,9 +47,9 @@ body, html {
     border-width: 0;
 }
 
-/* Ocultar el separador 'O' en pantallas grandes */
+/* Mostrar el separador 'O' por defecto */
 .my-6.text-center.text-gray-500 {
-    display: block; /* Visible por defecto en móvil */
+    display: block; 
 }
 
 /* Media Query para móvil (apilar elementos) */
@@ -45,23 +65,23 @@ body, html {
     }
 
     /* Ajustar padding y espaciado para las secciones en móvil */
-    .flex-1.flex.items-center.justify-center.relative.p-8 {
+    .flex-1.flex.items-center.justify-center.relative.p-8 { /* Sección izquierda */
         padding: 2rem; /* Menos padding en móvil */
     }
-    .flex-1.flex.items-center.justify-center.p-8 {
-        padding: 2rem; /* Menos padding en móvil */
+    .flex-1.flex.items-center.justify-center.p-8 { /* Sección derecha (formulario) */
+        padding: 2rem; /* Mantener padding general en móvil */
         background-color: rgba(255, 255, 255, 0.9); /* Más opaco en móvil para asegurar legibilidad */
     }
 
-    /* Mostrar el separador 'O' en móvil */
+    /* Asegurarse de que el separador 'O' esté visible en móvil */
     .my-6.text-center.text-gray-500 {
         display: block; 
     }
 }
 
-/* Media Query para desktop (ocultar el separador 'O' si no está en la imagen de referencia para desktop) */
+/* Media Query para desktop (re-confirmar visibilidad del 'O' si la imagen lo muestra) */
 @media (min-width: 768px) {
     .my-6.text-center.text-gray-500 {
-        display: none; /* Ocultar el separador 'O' en escritorio */
+        display: block; /* Mantiene el separador 'O' visible en escritorio, como en la imagen de referencia */
     }
 }

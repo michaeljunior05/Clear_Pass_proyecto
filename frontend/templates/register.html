@@ -19,12 +19,12 @@
                         sans: ['Inter', 'sans-serif'], 
                     },
                     colors: {
-                        'primary-button-blue': '#6385CD', // Color para el botón INGRESAR
-                        'primary-button-blue-hover': '#4A69AD', // Un tono más oscuro para el hover
-                        'input-bg-lightgray': '#A3B1B4', // Color para el fondo de los inputs
-                        'google-blue': '#4285F4', // Azul de Google para el botón
-                        'google-blue-hover': '#357AE8', // Azul de Google para el hover
-                        'form-title-text-color': '#6385CD', // <--- ¡NUEVO! Color para el título (igual que el botón)
+                        'register-title': '#6479FF', // Color del título "REGISTRARSE"
+                        'form-input-bg': '#E4E4E9', // Color de fondo para los inputs
+                        'register-button-bg': '#8D9CFF', // Color del botón "INGRESAR"
+                        'register-button-hover': '#7A8CFF', // Un tono más oscuro para el hover del botón
+                        'google-button-text': '#000000', 
+                        'google-button-bg-custom': '#4285F4', 
                     }
                 }
             }
@@ -34,7 +34,7 @@
     <!-- Font Awesome para iconos (mantenido por si acaso) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    <!-- Tu CSS consolidado (auth.css). Asegúrate de que no tenga reglas que sobrescriban Tailwind para este diseño. -->
+    <!-- Tu CSS consolidado (auth.css). -->
     <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
 
     {# Carga el script de Google Identity Services UNA SOLA VEZ #}
@@ -45,69 +45,67 @@
     <div class="w-full h-screen flex">
         {# Sección Izquierda con Fondo de Imagen y Logo Central #}
         <div class="hidden md:flex flex-1 items-center justify-center relative p-8"
-             style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-size: cover; background-position: center; background-repeat: no-repeat;">
+             style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-size: cover; background-position: 25% center; background-repeat: no-repeat;">
             <div class="w-60 h-60 rounded-full bg-white flex flex-col items-center justify-center relative z-10 shadow-lg text-center p-4">
-                <img src="{{ url_for('static', filename='images/clear_logo_hd.png') }}" class="max-w-full max-h-full object-contain">
-                {# Puedes añadir texto aquí si tu logo no lo incluye #}
-                {# <span class="text-3xl font-bold mt-2 text-gray-800">Clear Pass</span> #}
+                <img src="{{ url_for('static', filename='images/clear_logo.png') }}" alt="Clear Pass Logo" class="max-w-full max-h-full object-contain">
             </div>
         </div>
 
         {# Sección Derecha con Formulario (Fondo Blanco Sólido) #}
-        <div class="flex-1 flex items-center justify-center p-8 bg-white">
-            <div class="max-w-md w-full p-8 space-y-6">
-                {# Título y Subtítulo - Color solicitado para el título #}
-                <h2 class="text-4xl font-bold text-form-title-text-color text-center mb-2">REGISTRARSE</h2> {# <--- Usando el nuevo color aquí #}
-                <p class="text-black text-center mb-6 text-lg">INTRODUCE UN MAIL Y CREA TU CONTRASEÑA</p>
+        {# Ajustes para que el contenido sea más compacto y centrado #}
+        <div class="flex-1 flex items-center justify-center p-4 bg-white"> {# Reducido padding del contenedor principal a p-4 #}
+            <div class="max-w-md w-full p-4 space-y-3"> {# Reducido padding del div interior a p-4 y space-y-3 #}
+                {# Título y Subtítulo - Tamaño de texto reducido #}
+                <h2 class="text-3xl font-bold text-register-title text-center mb-1">REGISTRARSE</h2> {# text-3xl y mb-1 #}
+                <p class="text-base text-black text-center mb-4">INGRESE UN MAIL Y CREA TU CONTRASEÑA</p> {# text-base y mb-4 #}
 
-                <form id="register-form" class="space-y-4"> 
+                <form id="register-form" class="space-y-3"> {# Reducido space-y-3 para el formulario #}
                     <div>
-                        <label for="email" class="block text-gray-700 text-lg font-semibold mb-1">Email:</label>
+                        <label for="email" class="block text-gray-700 text-base font-semibold mb-1">Email:</label> {# text-base #}
                         <input type="email" id="email" name="email"
-                               class="bg-input-bg-lightgray bg-opacity-20 border border-gray-300 rounded-md p-3 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-button-blue" required>
+                               class="bg-form-input-bg border border-gray-300 rounded-md p-2.5 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-register-title" required> {# p-2.5 #}
                     </div>
                     <div>
-                        <label for="password" class="block text-gray-700 text-lg font-semibold mb-1">Contraseña:</label>
+                        <label for="password" class="block text-gray-700 text-base font-semibold mb-1">Contraseña:</label> {# text-base #}
                         <input type="password" id="password" name="password"
-                               class="bg-input-bg-lightgray bg-opacity-20 border border-gray-300 rounded-md p-3 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-button-blue" required>
+                               class="bg-form-input-bg border border-gray-300 rounded-md p-2.5 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-register-title" required> {# p-2.5 #}
                     </div>
                     <div>
-                        <label for="confirm_password" class="block text-gray-700 text-lg font-semibold mb-1">Confirmar contraseña:</label>
+                        <label for="confirm_password" class="block text-gray-700 text-base font-semibold mb-1">Confirmar contraseña:</label> {# text-base #}
                         <input type="password" id="confirm_password" name="confirm_password"
-                               class="bg-input-bg-lightgray bg-opacity-20 border border-gray-300 rounded-md p-3 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-primary-button-blue" required>
+                               class="bg-form-input-bg border border-gray-300 rounded-md p-2.5 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-register-title" required> {# p-2.5 #}
                     </div>
                     <button type="submit"
-                            class="bg-primary-button-blue text-white px-6 py-3 rounded-md w-full font-semibold shadow-md hover:bg-primary-button-blue-hover transition duration-200 text-lg">
+                            class="bg-register-button-bg text-white px-6 py-2.5 rounded-md w-full font-semibold shadow-md hover:bg-register-button-hover transition duration-200 text-base"> {# py-2.5 y text-base #}
                         INGRESAR
                     </button>
                 </form>
 
-                <div class="my-6 text-center text-gray-500 text-lg">O</div> 
+                <div class="my-4 text-center text-gray-500 text-base">O</div> {# my-4 y text-base #}
 
                 <div class="flex flex-col items-center justify-center space-y-2">
                     {# Contenedor para el botón de Google #}
-                    <div id="google-btn-container" class="w-full flex justify-center">
-                        <div id="g_id_onload"
-                            data-client_id="{{ google_client_id }}" 
-                            data-context="signup"
-                            data-ux_mode="popup"
-                            data-callback="handleCredentialResponse"
-                            data-auto_prompt="false">
-                        </div>
-                        {# EL DIV que Google llenará con el botón, le daremos un ID para controlarlo con JS si es necesario #}
-                        <div class="g_id_signin w-full" 
-                                data-type="standard" 
-                                data-shape="rectangular" 
-                                data-theme="outline" 
-                                data-text="signup_with"
-                                data-size="large" 
-                                data-logo_alignment="left">
-                        </div>
+                    <div id="g_id_onload"
+                        data-client_id="{{ google_client_id }}" 
+                        data-context="signup"
+                        data-ux_mode="popup"
+                        data-callback="handleCredentialResponse"
+                        data-auto_prompt="false">
                     </div>
+                    {# EL DIV que Google llenará con el botón, le daremos un ID para controlarlo con JS si es necesario #}
+                    <div class="g_id_signin w-full" 
+                            data-type="standard" 
+                            data-shape="rectangular" 
+                            data-theme="outline" 
+                            data-text="signup_with"
+                            data-size="large" 
+                            data-logo_alignment="left">
+                    </div>
+                    {# Texto explicativo debajo del botón #}
                     <p class="text-gray-600 text-sm">Regístrate con tu cuenta de trabajo de Google</p> 
                 </div>
                 
-                <p class="text-center text-gray-600 mt-4 text-lg">¿Ya tienes una cuenta? <a href="{{ url_for('show_login_form') }}" class="text-primary-button-blue hover:underline font-semibold">Iniciar sesión</a></p>
+                <p class="text-center text-gray-600 mt-3 text-base">¿Ya tienes una cuenta? <a href="{{ url_for('show_login_form') }}" class="text-register-title hover:underline font-semibold">Iniciar sesión</a></p> {# mt-3 y text-base #}
             </div>
         </div>
     </div>

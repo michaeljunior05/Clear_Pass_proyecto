@@ -1,3 +1,4 @@
+<!-- frontend/templates/login.html -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -5,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Clear Pass - Iniciar Sesión</title>
     
-    {# Favicon: el logo en la pestaña del navegador #}
+    {# Favicon #}
     <link rel="icon" href="{{ url_for('static', filename='images/clear_logo.png') }}" type="image/png">
 
     <!-- Tailwind CSS CDN -->
@@ -15,91 +16,98 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        sans: ['Inter', 'sans-serif'], // Usar Inter como fuente principal
+                        sans: ['Inter', 'sans-serif'], 
                     },
                     colors: {
-                        'primary-purple': '#635BFF', // Tu color morado
-                        'secondary-blue': '#4285F4', // Azul de Google
-                        'gray-bg': '#f4f4f4', // Fondo gris claro
-                        'register-button': '#635BFF', // Cambiado al morado de la imagen
-                        'register-button-hover': '#7A72FF', // Un tono ligeramente más claro para el hover
-                        'input-bg': '#FFFFFF', // Fondo blanco para los inputs
+                        // Colores genéricos para compartir entre login y registro
+                        'app-title-color': '#6479FF', // Color para títulos (Registro e Iniciar Sesión)
+                        'app-input-bg': '#E4E4E9', // Color de fondo para inputs
+                        'app-button-bg': '#8D9CFF', // Color del botón principal (INGRESAR)
+                        'app-button-hover': '#7A8CFF', // Hover del botón principal
+                        'google-button-bg-custom': '#4285F4', // Azul estándar de Google
                     }
                 }
             }
         }
     </script>
     
-    <!-- Font Awesome para iconos (check, google) -->
+    <!-- Font Awesome para iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 
-    <!-- Tu CSS consolidado para autenticación -->
+    <!-- Tu CSS consolidado (auth.css) -->
     <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
 
-    {# Carga el script de Google Identity Services UNA SOLA VEZ, preferiblemente aquí #}
+    {# Carga el script de Google Identity Services UNA SOLA VEZ #}
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
-<body class="font-sans bg-gray-bg min-h-screen flex items-center justify-center p-4"
-      style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-size: cover; background-position: center;">
+<body class="font-sans min-h-screen flex items-center justify-center overflow-hidden">
 
-    <div class="w-full max-w-md bg-white rounded-lg shadow-lg overflow-hidden">
-        {# Encabezado #}
-        <div class="bg-white p-8">
-            <h1 class="text-2xl font-bold text-center text-gray-800 mb-2">INICIAR SESIÓN</h1>
-            <p class="text-gray-600 text-center mb-6">INTRODUCE TU MAIL Y CONTRASEÑA</p>
-
-            <form id="login-form" method="POST" action="/api/login" class="space-y-4">
-                <div>
-                    <label for="email" class="sr-only">Email:</label>
-                    <input type="email" id="email" name="email" placeholder="Email:"
-                           class="bg-input-bg border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
-                </div>
-                <div>
-                    <label for="password" class="sr-only">Contraseña:</label>
-                    <input type="password" id="password" name="password" placeholder="Contraseña:"
-                           class="bg-input-bg border border-gray-300 rounded-md p-3 w-full focus:outline-none focus:ring-2 focus:ring-primary-purple text-gray-800">
-                </div>
-                <button type="submit"
-                        class="bg-register-button text-white px-6 py-3 rounded-md w-full font-semibold shadow-md hover:bg-register-button-hover transition duration-200">
-                    INGRESAR
-                </button>
-            </form>
-        </div>
-
-        {# Separador con logo Clear Pass #}
-        <div class="relative py-4">
-            <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-gray-300"></div>
-            </div>
-            <div class="relative flex justify-center">
-                <div class="px-4 bg-white flex items-center">
-                    <span class="text-lg font-bold">Clear</span>
-                    <i class="fas fa-check-circle text-primary-purple text-xl mx-1"></i>
-                    <span class="text-lg font-bold">Pass</span>
-                </div>
+    <div class="w-full h-screen flex">
+        {# Sección Izquierda con Fondo de Imagen y Logo Central (IDÉNTICA AL REGISTRO) #}
+        <div class="hidden md:flex flex-1 items-center justify-center relative p-8"
+             style="background-image: url('{{ url_for('static', filename='images/conteiner_hd.jpg') }}'); background-size: cover; background-position: 25% center; background-repeat: no-repeat;">
+            <div class="w-60 h-60 rounded-full bg-white flex flex-col items-center justify-center relative z-10 shadow-lg text-center p-4">
+                <img src="{{ url_for('static', filename='images/clear_logo.png') }}" alt="Clear Pass Logo" class="max-w-full max-h-full object-contain">
             </div>
         </div>
 
-        {# Pie de página con botón de Google #}
-        <div class="bg-white p-8 pt-0">
-            <div class="flex justify-center">
-                <div class="g_id_signin" 
-                     data-type="standard" 
-                     data-shape="rectangular" 
-                     data-theme="outline" 
-                     data-text="signin_with" 
-                     data-size="large" 
-                     data-logo_alignment="left"
-                     data-width="300">
+        {# Sección Derecha con Formulario (Fondo Blanco Sólido - IDÉNTICA ESTRUCTURA AL REGISTRO) #}
+        <div class="flex-1 flex items-center justify-center p-8 bg-white"> 
+            <div class="max-w-md w-full p-8 space-y-4"> 
+                {# Título y Subtítulo - Con los colores especificados #}
+                <h2 class="text-4xl font-bold text-app-title-color text-center mb-2">INICIAR SESIÓN</h2>
+                <p class="text-black text-center mb-6 text-lg">INTRODUCE TU MAIL Y CONTRASEÑA</p>
+
+                <form id="login-form" class="space-y-4"> 
+                    <div>
+                        <label for="email" class="block text-gray-700 text-lg font-semibold mb-1">Email:</label>
+                        <input type="email" id="email" name="email"
+                               class="bg-app-input-bg border border-gray-300 rounded-md p-3 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-app-title-color" required>
+                    </div>
+                    <div>
+                        <label for="password" class="block text-gray-700 text-lg font-semibold mb-1">Contraseña:</label>
+                        <input type="password" id="password" name="password"
+                               class="bg-app-input-bg border border-gray-300 rounded-md p-3 w-full text-gray-800 focus:outline-none focus:ring-2 focus:ring-app-title-color" required>
+                    </div>
+                    <button type="submit"
+                            class="bg-app-button-bg text-white px-6 py-3 rounded-md w-full font-semibold shadow-md hover:bg-app-button-hover transition duration-200 text-lg">
+                        INGRESAR
+                    </button>
+                </form>
+
+                {# Remover el separador "O" para Login #}
+                {# <div class="my-6 text-center text-gray-500 text-lg">O</div> #}
+
+                <div class="flex flex-col items-center justify-center space-y-2">
+                    {# Contenedor para el botón de Google. 'g_id_onload' se ocultará con CSS #}
+                    <div id="g_id_onload"
+                        data-client_id="{{ google_client_id }}" 
+                        data-context="signin" {# context="signin" para login #}
+                        data-ux_mode="popup"
+                        data-callback="handleCredentialResponse"
+                        data-auto_prompt="false">
+                    </div>
+                    {# EL DIV que Google llenará con el botón #}
+                    <div class="g_id_signin w-full" 
+                            data-type="standard" 
+                            data-shape="rectangular" 
+                            data-theme="outline" 
+                            data-text="signin_with" {# text="signin_with" para login #}
+                            data-size="large" 
+                            data-logo_alignment="left">
+                    </div>
+                    {# Texto explicativo debajo del botón. Adaptado para la imagen de Login #}
+                    <p class="text-gray-600 text-sm">Iniciar sesión con tu cuenta de trabajo de Google</p> 
                 </div>
+                
+                <p class="text-center text-gray-600 mt-4 text-lg">¿No tienes una cuenta? <a href="{{ url_for('show_register_form') }}" class="text-app-title-color hover:underline font-semibold">Regístrate</a></p>
             </div>
-            <p class="text-center text-gray-600 mt-4">Iniciar sesión con tu cuenta de trabajo de Google</p>
         </div>
     </div>
 
-    <!-- Módulos JS -->
-    {# NO DUPLICAR LA CARGA DE GSI CLIENT AQUI, YA ESTA EN HEAD #}
+    <!-- Módulos JS (Orden de carga IMPORTANTE) -->
     <script type="module" src="{{ url_for('static', filename='js/ui.js') }}"></script>
     <script type="module" src="{{ url_for('static', filename='js/auth.js') }}"></script>
+    <script type="module" src="{{ url_for('static', filename='js/main.js') }}"></script> 
 </body>
 </html>
