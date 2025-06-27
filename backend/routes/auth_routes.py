@@ -1,6 +1,7 @@
 # backend/routes/auth_routes.py
 from flask import Blueprint, jsonify, request, session, url_for, redirect
 import logging
+import google_auth_oauthlib.flow # Asegúrate de que esta importación esté presente si usas OAuth
 
 logger = logging.getLogger(__name__)
 
@@ -28,21 +29,20 @@ def register():
         logger.error("AuthController no inicializado.")
         return jsonify({"message": "Servicio de autenticación no disponible"}), 500
     
+    # Usar request.form.get() como en tu versión actual
     email = request.form.get('email')
     password = request.form.get('password')
     name = request.form.get('name')
     phone_number = request.form.get('phone_number')
     dni = request.form.get('dni')
 
-    # === CAMBIO CLAVE AQUÍ: Desempaquetar la tupla de retorno ===
+    # El controlador ahora devuelve la tupla (jsonify_obj, status_code)
     json_response_obj, status_code = _auth_controller.register_user(
         email=email, password=password, name=name, phone_number=phone_number, dni=dni
     ) 
     
-    # La variable 'json_response_obj' ahora es el objeto jsonify (dict-like)
-    # y 'status_code' es el entero.
-    # Ya no es necesario el 'if result and result.get...' porque el controlador
-    # ya devuelve el objeto jsonify con el mensaje.
+    # Si el registro fue exitoso, el controlador ya debería haber gestionado la sesión.
+    # El jsonify_obj ya es un objeto Flask.jsonify, solo lo devolvemos junto con el status_code.
     return json_response_obj, status_code
 
 @auth_bp.route('/login', methods=['POST'])
@@ -56,10 +56,11 @@ def login():
         logger.error("AuthController no inicializado.")
         return jsonify({"message": "Servicio de autenticación no disponible"}), 500
     
+    # Usar request.form.get() como en tu versión actual
     email = request.form.get('email')
     password = request.form.get('password')
 
-    # === CAMBIO CLAVE AQUÍ: Desempaquetar la tupla de retorno ===
+    # El controlador ahora devuelve la tupla (jsonify_obj, status_code)
     json_response_obj, status_code = _auth_controller.login_user(email=email, password=password)
     return json_response_obj, status_code
 
@@ -74,6 +75,7 @@ def google_login_api():
         logger.error("AuthController no inicializado.")
         return jsonify({"message": "Servicio de autenticación no disponible"}), 500
     
+    # El controlador ahora devuelve la tupla (jsonify_obj, status_code)
     json_response_obj, status_code = _auth_controller.google_login()
     return json_response_obj, status_code
 
@@ -87,6 +89,7 @@ def logout():
         logger.error("AuthController no inicializado.")
         return jsonify({"message": "Servicio de autenticación no disponible"}), 500
     
+    # El controlador ahora devuelve la tupla (jsonify_obj, status_code)
     json_response_obj, status_code = _auth_controller.logout_user()
     return json_response_obj, status_code
 
@@ -100,6 +103,7 @@ def get_session():
         logger.error("AuthController no inicializado.")
         return jsonify({"message": "Servicio de autenticación no disponible"}), 500
     
+    # El controlador ahora devuelve la tupla (jsonify_obj, status_code)
     json_response_obj, status_code = _auth_controller.get_session_info()
     return json_response_obj, status_code
 
@@ -114,6 +118,7 @@ def update_profile():
         logger.error("AuthController no inicializado.")
         return jsonify({"message": "Servicio de autenticación no disponible"}), 500
     
+    # El controlador ahora devuelve la tupla (jsonify_obj, status_code)
     json_response_obj, status_code = _auth_controller.update_user_profile()
     return json_response_obj, status_code
 
@@ -160,15 +165,10 @@ def google_oauth_callback():
     # === CAMBIO CLAVE AQUÍ: Llama al método del controlador y maneja su resultado ===
     json_response_obj, status_code = _auth_controller.handle_google_callback(code)
 
-    if status_code == 200 and 'id' in json_response_obj.json: # Acceder al JSON decodificado
-        user = _auth_controller.user_repository.get_user_by_id(json_response_obj.json['id'])
-        if user:
-            session['user_id'] = user.id
-            session['user_name'] = user.name
-            session['user_email'] = user.email
-            logger.info(f"Usuario {user.email} (Google OAuth) inició sesión exitosamente.")
-            return redirect(url_for('productos_page')) 
-        else:
-            return jsonify({"message": "Error en el inicio de sesión de Google (usuario no encontrado)."}), 500
+    # El controlador ahora es responsable de manejar la sesión y la redirección interna
+    # Aquí solo verificamos el resultado y devolvemos la respuesta JSON
+    if status_code == 200: # Si es exitoso, el controlador ya debió haber gestionado la sesión
+        # No redirigimos aquí, el controlador ya lo hizo o devolvemos JSON
+        return json_response_obj, status_code
     else:
         return json_response_obj, status_code # Devuelve el error JSON y el código de estado

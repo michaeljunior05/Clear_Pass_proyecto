@@ -1,4 +1,0 @@
-### frontend/static/ → Contiene CSS, imágenes y JavaScript para el diseño.
-
-### frontend/templates/ → Archivos HTML que se conectan con Flask usando render_template().
-

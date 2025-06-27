@@ -1,80 +1,88 @@
 # backend/routes/product_routes.py
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, render_template
 import logging
-from typing import Optional
-
-logger = logging.getLogger(__name__)
 
 product_bp = Blueprint('product_bp', __name__)
+logger = logging.getLogger(__name__)
 
-_product_controller = None 
+# Variable para almacenar la instancia del controlador que será inyectada
+_product_controller_instance = None 
 
-def init_product_routes(controller):
-    global _product_controller
-    _product_controller = controller
-    logger.info("Rutas de productos inicializadas con el controlador.")
+def init_product_routes(product_controller):
+    global _product_controller_instance
+    _product_controller_instance = product_controller
+    logger.info("product_routes: Controlador de productos inyectado.")
+
+@product_bp.route('/productos')
+def show_products():
+    """Renders the products page."""
+    initial_search_query = request.args.get('query', '')
+    return render_template('products.html', initial_search_query=initial_search_query)
+
+@product_bp.route('/product/<int:product_id>') # Ya debería estar así
+def show_product_detail(product_id):
+    """Renders the product detail page."""
+    return render_template('product_detail.html', product_id=product_id)
 
 
 @product_bp.route('/api/products', methods=['GET'])
-def get_products():
-    """
-    Ruta para obtener todos los productos o productos por categoría/búsqueda, con paginación.
+def get_products_api():
+    """API endpoint para obtener productos paginados y filtrados."""
+    if not _product_controller_instance:
+        logger.error("ProductController no ha sido inyectado en product_routes.")
+        return jsonify({"error": "Servicio de productos no disponible."}), 500
 
-    Parámetros de consulta:
-    - query (str, opcional): Término de búsqueda.
-    - category (str, opcional): Categoría de productos personalizada (ej. "telefonos moviles").
-    - page (int, opcional): Número de página (por defecto 1).
-    - limit (int, opcional): Límite de productos por página (por defecto 10).
-    """
     query = request.args.get('query')
-    user_category = request.args.get('category') 
-    page = request.args.get('page', 1, type=int)
-    limit = request.args.get('limit', 10, type=int)
+    category = request.args.get('category')
+    page = int(request.args.get('page', 1))
+    limit = int(request.args.get('limit', 10))
 
-    if not _product_controller:
-        logger.error("ProductController no inicializado en rutas de productos.")
-        return jsonify({"error": "Servicio de productos no disponible"}), 500
-
-    products_data, total_pages = _product_controller.get_products(
-        query=query, user_category=user_category, page=page, limit=limit
+    logger.info(f"API Request: get_products_api - Query: {query}, Category: {category}, Page: {page}, Limit: {limit}")
+    
+    products_data, total_filtered_products = _product_controller_instance.get_products(
+        query=query, user_category=category, page=page, limit=limit
     )
+    
+    total_pages = 0
+    if limit > 0:
+        total_pages = (total_filtered_products + limit - 1) // limit 
+    if total_pages == 0 and total_filtered_products > 0: 
+        total_pages = 1
 
-    if products_data is not None:
-        return jsonify({
-            "products": products_data,
-            "page": page,
-            "limit": limit,
-            "total_pages": total_pages,
-            "total_products_on_page": len(products_data) 
-        }), 200
-    else:
-        return jsonify({"error": "No se pudieron obtener los productos"}), 500
+    return jsonify({
+        'products': products_data,
+        'total_products': total_filtered_products, 
+        'total_pages': total_pages,
+        'current_page': page,
+        'products_on_page': len(products_data) 
+    })
 
-
-@product_bp.route('/api/products/<string:product_id>', methods=['GET']) 
-def get_single_product(product_id: str): 
-    """
-    Ruta para obtener un producto específico por su ID.
-    """
-    if not _product_controller:
-        logger.error("ProductController no inicializado en rutas de productos.")
-        return jsonify({"error": "Servicio de productos no disponible"}), 500
-
-    product_data = _product_controller.get_product_details(product_id)
+# --- ¡NUEVA RUTA API PARA OBTENER UN PRODUCTO POR ID CON <int:product_id>! ---
+@product_bp.route('/api/products/<int:product_id>', methods=['GET']) # <--- CAMBIO CLAVE AQUÍ: <int:product_id>
+def get_product_by_id_api(product_id):
+    """API endpoint para obtener un producto por su ID."""
+    if not _product_controller_instance:
+        logger.error("ProductController no ha sido inyectado en product_routes.")
+        return jsonify({"error": "Servicio de productos no disponible."}), 500
+    
+    logger.info(f"API Request: get_product_by_id_api - ID: {product_id} (Tipo: {type(product_id)})")
+    
+    # Llama al método del controlador para obtener el producto
+    product_data = _product_controller_instance.get_product_by_id(product_id) 
     
     if product_data:
         return jsonify(product_data), 200
     else:
-        return jsonify({"error": "Producto no encontrado"}), 404
+        logger.warning(f"Producto con ID {product_id} no encontrado.")
+        return jsonify({"error": "Producto no encontrado."}), 404
 
 @product_bp.route('/api/categories', methods=['GET'])
 def get_categories_api():
-    """
-    Ruta para obtener todas las categorías de productos personalizadas en español.
-    """
-    if not _product_controller:
-        logger.error("ProductController no inicializado en rutas de productos.")
-        return jsonify({"error": "Servicio de productos no disponible"}), 500
-    
-    categories = _product_controller.get_categories()
-    return jsonify(categories), 200
+    """API endpoint para obtener las categorías de productos disponibles."""
+    if not _product_controller_instance:
+        logger.error("ProductController no ha sido inyectado en product_routes.")
+        return jsonify({"error": "Servicio de categorías no disponible."}), 500
+
+    logger.info("API Request: get_categories_api")
+    categories = _product_controller_instance.get_categories()
+    return jsonify(categories)
