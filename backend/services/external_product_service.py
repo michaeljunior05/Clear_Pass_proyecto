@@ -100,9 +100,26 @@ class ExternalProductService:
         return all_fetched_products, total_from_api
 
 
-    def get_product_by_id(self, product_id: str) -> Optional[Dict[str, Any]]:
-        endpoint = f"products/{product_id}"
-        return self._make_request(endpoint)
+    def get_product_by_id(self, product_id):
+        """
+        Obtiene un producto específico por su ID desde la API externa.
+        """
+        endpoint = f"{self.base_url}/products/{product_id}"
+        try:
+            response = requests.get(endpoint)
+            response.raise_for_status()
+            product_data = response.json()
+            logger.info(f"ExternalProductService: Obtenido producto con ID {product_id}.")
+            return product_data
+        except requests.exceptions.HTTPError as e:
+            if e.response.status_code == 404:
+                logger.warning(f"ExternalProductService: Producto con ID {product_id} no encontrado en la API externa.")
+                return None
+            logger.error(f"Error HTTP al obtener producto por ID {product_id}: {e}")
+            return None
+        except requests.exceptions.RequestException as e:
+            logger.error(f"Error de red al obtener producto por ID {product_id}: {e}")
+            return None
 
     def get_categories(self) -> Optional[List[str]]:
         endpoint = "products/categories"

@@ -74,3 +74,19 @@ class ProductController:
         """
         logger.info("Solicitando categorías de productos personalizadas para el frontend.")
         return FRONTEND_DISPLAY_CATEGORIES
+    
+    def get_product_by_id(self, product_id):
+        """
+        Obtiene un producto específico por su ID.
+        Delega la búsqueda al servicio externo (o repositorio).
+        """
+        logger.info(f"ProductController: Buscando producto con ID: {product_id}")
+        product_data = self.external_product_service.get_product_by_id(product_id)
+        
+        if product_data:
+            # Puedes convertir el diccionario a un objeto Product si tienes esa lógica
+            # product_obj = Product.from_dict(product_data)
+            # return product_obj.to_dict() # Retornar un diccionario para jsonify
+            return product_data # Devuelve el diccionario directamente
+        return None
+

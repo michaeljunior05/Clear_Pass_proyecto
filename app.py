@@ -2,7 +2,7 @@
 import os 
 os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1' # ¡MANTENER ESTA LÍNEA POR AHORA! Aunque usemos HTTPS, a veces oauthlib puede ser caprichosa.
 
-from flask import Flask, render_template, url_for, session, redirect, jsonify, request 
+from flask import Flask, render_template, url_for, session, redirect, jsonify, request, flash
 from flask_session import Session
 import logging
 from datetime import timedelta
@@ -151,12 +151,65 @@ def create_app():
         logged_in = 'user_id' in session
         user_name = session.get('user_name', 'Usuario')
         return render_template('product_detail.html', product_id=product_id, logged_in=logged_in, user_name=user_name)
-
-    @app.route('/perfil')
+    
+    @app.route('/perfil', methods=['GET']) # <-- Asegúrate de que methods=['GET'] esté presente o elimínalo si no hay más métodos
     def profile_page():
-        logged_in = 'user_id' in session 
-        user_name = session.get('user_name', 'Invitado') 
-        return render_template('profile.html', logged_in=logged_in, user_name=user_name)
+        if 'user_id' not in session:
+            flash('Necesitas iniciar sesión para ver tu perfil.', 'warning')
+            return redirect(url_for('auth_bp.login')) # Redirige a login usando el blueprint auth_bp
+        
+        # Intenta obtener los datos de la sesión, proporcionando valores por defecto si no existen
+        user_name = session.get('user_name', 'Usuario')
+        user_email = session.get('user_email', 'No disponible')
+        user_dni = session.get('user_dni', 'No disponible')
+        user_phone = session.get('user_phone', 'No disponible')
+
+        # Renderiza la plantilla de perfil, pasando las variables
+        return render_template('profile.html', 
+                            logged_in=True, 
+                            user_name=user_name, 
+                            user_email=user_email,
+                            user_dni=user_dni,
+                            user_phone=user_phone)
+
+
+    @app.route('/purchases')
+    def purchases_page(): # Cambiado a purchases_page para evitar conflicto de nombre con la sesión
+        # Lógica para mostrar compras
+        if 'user_id' not in session:
+            flash('Necesitas iniciar sesión para ver tus compras.', 'warning')
+            return redirect(url_for('auth_bp.login'))
+        return render_template('purchases.html', logged_in=True, user_name=session.get('user_name', 'Usuario'))
+
+    @app.route('/history')
+    def history_page():
+        # Lógica para mostrar historial
+        if 'user_id' not in session:
+            flash('Necesitas iniciar sesión para ver tu historial.', 'warning')
+            return redirect(url_for('auth_bp.login'))
+        return render_template('history.html', logged_in=True, user_name=session.get('user_name', 'Usuario'))
+
+    @app.route('/facturas') # Nueva ruta
+    def facturas_page():
+        if 'user_id' not in session:
+            flash('Necesitas iniciar sesión para ver tus facturas.', 'warning')
+            return redirect(url_for('auth_bp.login'))
+        return render_template('facturas.html', logged_in=True, user_name=session.get('user_name', 'Usuario'))
+
+    @app.route('/credits')
+    def credits_page():
+        # Lógica para mostrar créditos
+        if 'user_id' not in session:
+            flash('Necesitas iniciar sesión para ver tus créditos.', 'warning')
+            return redirect(url_for('auth_bp.login'))
+        return render_template('credits.html', logged_in=True, user_name=session.get('user_name', 'Usuario'))
+
+    @app.route('/configuracion') # Nueva ruta
+    def configuracion_page():
+        if 'user_id' not in session:
+            flash('Necesitas iniciar sesión para ver tu configuración.', 'warning')
+            return redirect(url_for('auth_bp.login'))
+        return render_template('configuracion.html', logged_in=True, user_name=session.get('user_name', 'Usuario'))
 
 
     return app

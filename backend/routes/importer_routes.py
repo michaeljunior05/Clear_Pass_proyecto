@@ -1,11 +1,6 @@
 # backend/routes/importer_routes.py
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, session, render_template # Asegúrate de importar render_template
 import logging
-
-# Se importarán después con la función de inicialización
-# from backend.repositories.importer_repository import ImporterRepository
-# from backend.services.importer_ranking_service import ImporterRankingService
-# from backend.repositories.user_repository import UserRepository # Para verificar premium
 
 logger = logging.getLogger(__name__)
 
@@ -26,6 +21,10 @@ def init_importer_routes(ranking_service, user_repo):
 
 # Función auxiliar para verificar si el usuario es premium
 def is_premium_user_check():
+    """
+    Verifica si el usuario actual en sesión es premium.
+    Requiere que _user_repository esté inyectado.
+    """
     user_id = session.get('user_id')
     if not user_id:
         logger.warning("Intento de acceso a funcionalidad premium sin usuario en sesión.")
@@ -35,13 +34,19 @@ def is_premium_user_check():
         logger.error("UserRepository no inicializado en rutas de importadores. Fallo en verificación premium.")
         return False
 
+    # Asumiendo que get_user_by_id devuelve un objeto User con un atributo is_premium
     user = _user_repository.get_user_by_id(user_id)
-    if user and user.is_premium:
-        logger.info(f"Usuario {user_id} ({user.email}) es premium. Acceso concedido.")
+    if user and hasattr(user, 'is_premium') and user.is_premium: # Verificar si tiene el atributo antes de accederlo
+        logger.info(f"Usuario {user_id} ({user.email if hasattr(user, 'email') else 'N/A'}) es premium. Acceso concedido.")
         return True
     
     logger.warning(f"Usuario {user_id} no es premium o no encontrado. Acceso denegado.")
     return False
+
+# Ruta para renderizar la página de importadores
+@importer_bp.route('/importers')
+def show_importers_page(): # Renombrado para evitar conflicto si tenías otro endpoint /importers
+    return render_template('importers.html') # Asegúrate de que tengas este template
 
 @importer_bp.route('/api/importers/ranking', methods=['GET'])
 def get_importers_ranking():
@@ -114,4 +119,3 @@ def get_all_importers_api():
 
     importers = _importer_ranking_service.importer_repo.get_all_importers() # Accede al repo a través del servicio
     return jsonify([imp.to_dict() for imp in importers]), 200 # Asegura que se devuelven diccionarios
-
